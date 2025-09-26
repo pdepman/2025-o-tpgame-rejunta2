@@ -1,18 +1,8 @@
 import wollok.game.*
 
-import example.pepita
-
-program PepitaGame {
-	game.title("Pepita")
-	game.height(10)
-	game.width(10)
-
-	// add assets in asset folder, for example, for the background
-  // game.boardGround("fondo2.jpg")
-
-	//
-
-	game.showAttributes(pepita) //Debug
-
-	game.start()
+program mainExample {
+  game.width(12); game.height(8); game.cellSize(48)
+  game.title("RPG por turnos")
+  example.mundo.iniciar() 
+  game.start()
 }
