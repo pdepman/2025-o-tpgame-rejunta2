@@ -2,11 +2,14 @@ UTN - Facultad Regional Buenos Aires - Materia Paradigmas de Programación
 
 ## Equipo de desarrollo:
 
-- Completar
+- Lucas Almiron
+- Federico Bremberg
+- David Fuertes Mamani
+- Franco Marcolin
 
 ## Introducción
 
-- Completar descripción del juego
+- Nuestro juego se trata de un juego RPG de combate, donde hay diversas areas, 3 en total, en las que nuestro personaje elegido puede transitar. El objetivo de nuestro protagonista es llegar al nivel 3, donde se encuentra la Boss Fight final, y si gana, finaliza exitosamente el juego. 
 
 ## Capturas
 
