@@ -1,19 +1,70 @@
 import wollok.game.*
 
-class Heroe {
-  var property position = game.center()
-  var property nombre = ""
+class Personaje {
+  var nombre = ""
+  var nivel = 1
+  var exp = 0
+  var monedas = 0
+
+  var vida = 100
+  var mana = 50
+  var ataque = 10
+  var defensa = 5
+  var magia = 0
+  //var velocidad = 5 hay que definir si queremos implementar la velocidad
+
+  var puntosDisponibles = 0 // puntos de stats a acomodar
+  var habilidades = []
+
+  var position = game.center()
+
   method image() = "player.jpg"
+
+  // el pj deberia ganar experiencia y subir de lvl en algun punto (a definir a futuro)
+  method ganarExp(cantidad) {
+  }
+
+  method subirNivel() {
+  }
+
+  method recibirDaño(cantidad) {
+  }
+
+  //quedaria definir metodos de ataque, uso de menu, etc
+  // tambien faltaria a futuro meter metodos para acomodar los stats que se te asignan al subir de nivel
+
 }
 
-const guerrero = new Heroe(nombre = "Guerrero")
-const mago     = new Heroe(nombre = "Mago")
-const arquero  = new Heroe(nombre = "Arquero")
+class Habilidad {
+  var nombre = ""
+  var costoMana = 0
+  var costoEnergia = 0
+  var daño = 0
+
+  method usarEn(objetivo) {
+    objetivo.recibirDaño(daño)
+  }
+}
+
+class Enemigo {
+  var nombre = ""
+  var vida = 50
+  var ataque = 5
+  var expOtorgada = 50
+  var monedasOtorgadas = 20
+  var position = game.center()
+
+  method image() = "enemigo.jpg"
+
+
+  method recibirDaño(cantidad) {
+    }
+}
 
 
 class Portal {
-  var property position = game.center()
-  var property destino = null
+  var position = game.center()
+  var destino = null
   method image() = "portal.jpg"
   method fueTocadoPor(jugador) { mundo.cambiarArea(destino) }
 }
@@ -52,7 +103,7 @@ object area3 {
 
 // ===== Mundo =====
 object mundo {
-  const heroe = guerrero
+  const heroe = new Personaje(nombre = "Jugador")
   var areaActual = area1
 
   method iniciar() {
