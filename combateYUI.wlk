@@ -62,16 +62,29 @@ object sistemaDeCombate {
 	
 	method procesarAccionHeroe(tecla) {
 		keyboard.any().clearListeners()
-		if (tecla == '1') { heroe.usarHabilidad(heroe.habilidades().first(), enemigo) } 
-		else if (tecla == '2') { heroe.usarHabilidad(heroe.habilidades().last(), enemigo) } 
-		else if (tecla == '3') { if (heroe.inventario().nonEmpty()) { heroe.usarItem(heroe.inventario().first()) } } 
-		else if (tecla == '4') { self.terminarCombate(null) }
-		
-		if (tecla != '4') {
-			uiCombate.actualizarUI(heroe, enemigo)
-			turno = enemigo
-			game.schedule(1500, { => self.siguienteTurno() })
-		}
+		// Tabla de delegación: cada entrada mapea una tecla a una función que realiza la acción.
+		const acciones = [
+			[ '1', { => 
+				heroe.usarHabilidad(heroe.habilidades().first(), enemigo)
+				uiCombate.actualizarUI(heroe, enemigo)
+				turno = enemigo
+				game.schedule(1500, { => self.siguienteTurno() })
+			} ],
+			[ '2', { => 
+				heroe.usarHabilidad(heroe.habilidades().last(), enemigo)
+				uiCombate.actualizarUI(heroe, enemigo)
+				turno = enemigo
+				game.schedule(1500, { => self.siguienteTurno() })
+			} ],
+			[ '3', { => 
+				// Usar take(1).forEach para aplicar el ítem sólo si existe, evitando ifs
+				heroe.inventario().take(1).forEach({ item => heroe.usarItem(item); uiCombate.actualizarUI(heroe, enemigo); turno = enemigo; game.schedule(1500, { => self.siguienteTurno() }) })
+			} ],
+			[ '4', { => self.terminarCombate(null) } ]
+		]
+
+		const entrada = acciones.filter({ a => a.first() == tecla }).first()
+		if (entrada != null) { entrada.last().apply() }
 	}
 	
 	method turnoEnemigo() {

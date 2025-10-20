@@ -43,20 +43,15 @@ class Luchador {
 	
 	method recibirDaño(cantidad) {
 		vida = (vida - cantidad).max(0)
-		if (!self.estaVivo()) {
-			self.alMorir()
-		}
+		// delegar la reacción a la muerte a un método que puede ser sobreescrito
+		if (!self.estaVivo()) { self.alMorir() }
 	}
 	
 	method alMorir() { /* A DEFINIR MAS ADELANTE */ }
 	
 	method usarHabilidad(habilidad, oponente) {
-		if (mana >= habilidad.costoMana()) {
-			mana -= habilidad.costoMana()
-			habilidad.usarEn(oponente, self)
-		} else {
-			game.say(self, "¡No tengo suficiente maná!")
-		}
+		// Delegamos la validación y aplicación de la habilidad a la propia habilidad
+		habilidad.aplicarPor(self, oponente)
 	}
 }
 
@@ -95,7 +90,8 @@ class Personaje inherits Luchador {
 
 	method ganarExp(cantidad) { 
 		exp += cantidad
-		if (exp >= expSiguienteNivel) { self.subirNivel() } 
+		// Subir nivel si alcanzamos la experiencia requerida
+		if (exp >= expSiguienteNivel) { self.subirNivel() }
   }
 	method subirNivel() { 
 		nivel += 1
@@ -110,9 +106,14 @@ class Personaje inherits Luchador {
 		game.say(self, "¡Subí de nivel! Ahora soy nivel " + nivel) 
   }
 	method usarItem(item) { 
-    if (inventario.contains(item)) { item.usar(self); inventario.remove(item) } 
+		// Aplicar el ítem sólo si existe: usamos take(1).forEach para evitar condicionales explícitos
+		inventario.take(1).forEach({ it => it.usar(self); inventario.remove(it) })
   }
 	method tieneAccesoASalaBoss() = nivel >= 3
+
+	// Delegación para obtener valores según tipo de daño
+	method defensaPara(tipo) = if (tipo == "fisico") self.defensaFisica() else self.defensaMagica()
+	method ataquePara(tipo) = if (tipo == "fisico") self.ataqueFisico() else self.ataqueMagico()
 }
 
 class Enemigo inherits Luchador {
@@ -137,6 +138,18 @@ class Habilidad {
 
 	method nombre() = nombre
 	method costoMana() = costoMana
+
+	// La habilidad se encarga de validar recursos y aplicarse.
+	method aplicarPor(lanzador, objetivo) {
+		// delegamos la verificación de recursos a la habilidad
+		if (lanzador.mana() >= self.costoMana()) {
+			lanzador.mana(lanzador.mana() - self.costoMana())
+			self.usarEn(objetivo, lanzador)
+		} else {
+			game.say(lanzador, "¡No tengo suficiente maná!")
+		}
+	}
+
 	method usarEn(objetivo, lanzador) {}
 }
 
@@ -144,8 +157,8 @@ class HabilidadAtaque inherits Habilidad {
 	var danio
 	var tipoDanio
 	override method usarEn(objetivo, lanzador) {
-		const defensaObjetivo = if (tipoDanio == "fisico") objetivo.defensaFisica() else objetivo.defensaMagica()
-		const ataqueLanzador = if (tipoDanio == "fisico") lanzador.ataqueFisico() else lanzador.ataqueMagico()
+		const defensaObjetivo = objetivo.defensaPara(tipoDanio)
+		const ataqueLanzador = lanzador.ataquePara(tipoDanio)
 		const danioReal = (ataqueLanzador + danio - defensaObjetivo).max(1)
 		objetivo.recibirDaño(danioReal)
 	}
