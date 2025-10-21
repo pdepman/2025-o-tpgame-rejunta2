@@ -8,7 +8,7 @@ object uiCombate {
 	
 	method dibujarPantallaDeCombate(heroe, enemigo) {
 		game.clear()
-		const fondo = new Decoracion(image="battle_bg.jpg", position=game.origin())
+		const fondo = new Decoracion(image="battle_bg.png", position=game.origin())
 		uiHeroe = new Decoracion(image="textbox.png", position=game.at(12, 2))
 		uiEnemigo = new Decoracion(image="textbox.png", position=game.at(1, 7))
 		
@@ -56,7 +56,87 @@ object sistemaDeCombate {
 	}
 	
 	method mostrarMenuHeroe() {
-		game.title("Elige: 1)Ataque 2)Magia 3)Poción 4)Huir")
+		game.title("Elige: F/G/H/J = Ataques | 3 = Poción | 4 = Huir")
+		// Limpiamos listeners previos por si quedaron registrados
+		keyboard.any().clearListeners()
+		keyboard.f().clearListeners()
+		keyboard.g().clearListeners()
+		keyboard.h().clearListeners()
+		keyboard.j().clearListeners()
+
+		keyboard.f().onPressDo({ =>
+			// Slot 1 (primer ataque)
+			keyboard.f().clearListeners()
+			keyboard.g().clearListeners()
+			keyboard.h().clearListeners()
+			keyboard.j().clearListeners()
+			keyboard.any().clearListeners()
+			const hab = heroe.habilidades().take(1).last()
+			if (hab != null) {
+				heroe.usarHabilidad(hab, enemigo)
+				uiCombate.actualizarUI(heroe, enemigo)
+				turno = enemigo
+				game.schedule(1500, { => self.siguienteTurno() })
+			} else {
+				game.say(heroe, "No conozco ese ataque")
+			}
+		})
+
+		keyboard.g().onPressDo({ =>
+			// Slot 2 (segundo ataque)
+			keyboard.f().clearListeners()
+			keyboard.g().clearListeners()
+			keyboard.h().clearListeners()
+			keyboard.j().clearListeners()
+			keyboard.any().clearListeners()
+			const hab = heroe.habilidades().take(2).last()
+			if (hab != null) {
+				heroe.usarHabilidad(hab, enemigo)
+				uiCombate.actualizarUI(heroe, enemigo)
+				turno = enemigo
+				game.schedule(1500, { => self.siguienteTurno() })
+			} else {
+				game.say(heroe, "No conozco ese ataque")
+			}
+		})
+
+		keyboard.h().onPressDo({ =>
+			// Slot 3 (tercer ataque, si existe)
+			keyboard.f().clearListeners()
+			keyboard.g().clearListeners()
+			keyboard.h().clearListeners()
+			keyboard.j().clearListeners()
+			keyboard.any().clearListeners()
+			const hab = heroe.habilidades().take(3).last()
+			if (hab != null) {
+				heroe.usarHabilidad(hab, enemigo)
+				uiCombate.actualizarUI(heroe, enemigo)
+				turno = enemigo
+				game.schedule(1500, { => self.siguienteTurno() })
+			} else {
+				game.say(heroe, "No conozco ese ataque")
+			}
+		})
+
+		keyboard.j().onPressDo({ =>
+			// Slot 4 (cuarto ataque, si existe)
+			keyboard.f().clearListeners()
+			keyboard.g().clearListeners()
+			keyboard.h().clearListeners()
+			keyboard.j().clearListeners()
+			keyboard.any().clearListeners()
+			const hab = heroe.habilidades().take(4).last()
+			if (hab != null) {
+				heroe.usarHabilidad(hab, enemigo)
+				uiCombate.actualizarUI(heroe, enemigo)
+				turno = enemigo
+				game.schedule(1500, { => self.siguienteTurno() })
+			} else {
+				game.say(heroe, "No conozco ese ataque")
+			}
+		})
+
+		// Mantenemos las opciones de objeto/huyir por tecla numérica como fallback (3 y 4)
 		keyboard.any().onPressDo({ key => self.procesarAccionHeroe(key.asChar()) })
 	}
 	
