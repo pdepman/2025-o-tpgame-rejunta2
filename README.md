@@ -27,7 +27,7 @@ UTN - Facultad Regional Buenos Aires - Materia Paradigmas de Programación
 
 ## Explicaciones teóricas y diagramas
 
-- Completar Link a .md
+![Diagrama UML del juego](assets/UML-TPRejunta2.pdf.png)
 
 
 
