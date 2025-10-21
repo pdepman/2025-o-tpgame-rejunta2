@@ -106,7 +106,7 @@ class Personaje inherits Luchador {
 		game.say(self, "¡Subí de nivel! Ahora soy nivel " + nivel) 
   }
 	method usarItem(item) { 
-		// Aplicar el ítem sólo si existe: usamos take(1).forEach para evitar condicionales explícitos
+		// Aplicar el ítem sólo si existe: usamos take(1).forEach
 		inventario.take(1).forEach({ it => it.usar(self); inventario.remove(it) })
   }
 	method tieneAccesoASalaBoss() = nivel >= 3

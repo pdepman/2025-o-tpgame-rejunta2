@@ -3,7 +3,7 @@ import objectsAndDragons.*
 import combateYUI.*             
 import stages.*                 
 
-describe "Unitarios - Dominio RPG (archivo único, runner-safe)" {
+describe "Unitarios - Dominio RPG" {
 
   test "recibirDaño nunca baja de 0 y el personaje queda no-vivo" {
     const p = new Personaje(position = game.center())
@@ -58,7 +58,7 @@ describe "Unitarios - Dominio RPG (archivo único, runner-safe)" {
     p.usar(h)
     assert.equals(80, h.vida())
 
-    p.usar(h) // 80 + 30 → cap en 100
+    p.usar(h) // 80 + 30 -> cap en 100
     assert.equals(100, h.vida())
   }
 
@@ -76,7 +76,7 @@ describe "Unitarios - Dominio RPG (archivo único, runner-safe)" {
   }
 }
 
-describe "Funcionales - Flujos" {
+describe "Test de portales y combate sin loop" {
 
   test "Acceso a Sala del Boss depende de tieneAccesoASalaBoss()" {
     const h = new Personaje(position = game.center())

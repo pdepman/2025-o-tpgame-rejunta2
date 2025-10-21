@@ -22,11 +22,11 @@ object bosqueDeMonstruos {
 	method descargar() {
 		visuals.forEach { visual => game.removeVisual(visual) }
 		visuals = []
-		// No limpiamos listeners globales aquí para no interferir con entradas registradas en mundo
+		// No limpiamos listeners globales aca
 	}
 
 	method alMoverse() {
-		// Antes los encuentros eran aleatorios al moverse; ahora los dejamos controlados por la tecla E
+		// Antes los encuentros eran aleatorios al moverse; ahora los dejamos controlados por la tecla E (SIGUE SIN FUNCIONAR >.< )
 	}
 }
 object puebloDelRey {
@@ -55,7 +55,7 @@ object salaDelBoss {
 		game.title("Sala del Jefe Final")
 		// const fondo = new Decoracion(image="sala_jefe.png", position=game.origin())
 		// game.addVisual(fondo)
-		// Añadimos un único portal que devuelva al pueblo (ciudad)
+		// un único portal que devuelva al pueblo (ciudad)
 		const fondo = new Decoracion(image="pueblo.jpg", position=game.origin())
 		game.addVisual(fondo)
 		visuals.add(fondo)
@@ -87,7 +87,7 @@ object mundo {
     keyboard.a().onPressDo({ => self.moverHeroe(-1, 0) })
 		keyboard.d().onPressDo({ => self.moverHeroe(1, 0) }) 
 
-		// Tecla E: iniciar combate manual en el bosque
+		// iniciar combate manual en el bosque al tocar la e
 				keyboard.e().onPressDo({ =>
 					// Debug: mostrar que se pulsó E y el contexto (área + estado)
 					game.title("E pulsada en area=" + areaActual.background() + " estado=" + estadoJuego)
@@ -119,13 +119,10 @@ object mundo {
 	// Limpiamos la pantalla, cargamos la nueva área (para que boardGround se aplique) y luego añadimos el héroe
 	game.clear()
 	areaActual.cargar()
-	// Los fondos ahora son Decoracion añadida por cada área en cargar()
 	game.addVisualCharacter(heroe)
 	heroe.position(game.center())
 	// Registrar colisión para portales/visuals del área cargada
 	game.whenCollideDo(heroe, { otro => otro.fueTocadoPor(heroe) })
-	// area.cargar() ya debe establecer título y fondo; forzamos título por si acaso
-	// (no re-registramos la colisión aquí: la registramos sólo una vez en iniciar)
   }
 	method cambiarACombate(enemigo) { 
     estadoJuego = "combate" 
