@@ -14,7 +14,7 @@ class Luchador {
 	var ataqueMagico
 	var defensaMagica
 	var velocidad
-	var position
+	var property position
 	var habilidades = []
 
 	method nombre() = nombre
