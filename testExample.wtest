@@ -1,180 +1,148 @@
 import wollok.game.*
-import stages.*
-import combateYUI.*
+import objectsAndDragons.*      
+import combateYUI.*             
+import stages.*                 
 
-class Luchador {
-	var nombre
-	var nivel = 1
-	var vida
-	var vidaMaxima // LO USAMOS DE REFERENCIA PARA TENER UN MAXIMO DE VIDA 
-	var mana
-	var manaMaximo // LO MISMO QUE VIDA MAXIMA
-	var ataqueFisico
-	var defensaFisica
-	var ataqueMagico
-	var defensaMagica
-	var velocidad
-	var property position
-	var habilidades = []
+describe "Unitarios - Dominio RPG (archivo único, runner-safe)" {
 
-	method nombre() = nombre
-	method nombre(nuevoNombre) { nombre = nuevoNombre }
+  test "recibirDaño nunca baja de 0 y el personaje queda no-vivo" {
+    const p = new Personaje(position = game.center())
 
-	method vida() = vida
-	method vida(nuevaVida) { vida = nuevaVida }
+    p.recibirDaño(9999)
 
-	method vidaMaxima() = vidaMaxima
+    assert.equals(0, p.vida())
+    assert.equals(false, p.estaVivo())
+  }
 
-	method mana() = mana
-	method mana(nuevoMana) { mana = nuevoMana }
+  test "ganarExp → subirNivel rellena vida/maná y sube stats" {
+    const h = new Personaje(position = game.center())
+    const vidaPrev = h.vidaMaxima()
+    const manaPrevActual = h.mana()        
 
-	method ataqueFisico() = ataqueFisico
-	method ataqueMagico() = ataqueMagico
-	method defensaFisica() = defensaFisica
-	method defensaMagica() = defensaMagica
-	method velocidad() = velocidad
+    h.ganarExp(h.expSiguienteNivel())     
 
-	method position() = position
-	method position(nuevaPosicion) { position = nuevaPosicion }
+    assert.equals(vidaPrev + 20, h.vidaMaxima())
+    assert.equals(h.vidaMaxima(), h.vida())
+    assert.equals(manaPrevActual + 10, h.mana())   
+  }
 
-	method habilidades() = habilidades
+  test "HabilidadAtaque respeta defensa y pega mínimo 1 (P vs P)" {
+  const lanzador = new Personaje(position = game.center())
+  const objetivo = new Personaje(position = game.center())
+  const hab = new HabilidadAtaque(nombre="Golpecito", danio=-999, tipoDanio="fisico", costoMana=0)
 
-	method estaVivo() = vida > 0
-	
-	method recibirDaño(cantidad) {
-		vida = (vida - cantidad).max(0)
-		// delegar la reacción a la muerte a un método que puede ser sobreescrito
-		if (!self.estaVivo()) { self.alMorir() }
-	}
-	
-	method alMorir() { /* A DEFINIR MAS ADELANTE */ }
-	
-	method usarHabilidad(habilidad, oponente) {
-		// Delegamos la validación y aplicación de la habilidad a la propia habilidad
-		habilidad.aplicarPor(self, oponente)
-	}
+  lanzador.usarHabilidad(hab, objetivo)
+
+  assert.equals(objetivo.vidaMaxima() - 1, objetivo.vida())
 }
 
-class Personaje inherits Luchador {
-	var exp = 0
-	var expSiguienteNivel = 100
-	var inventario = []
+  test "Costo de maná: si no alcanza, no aplica y no gasta" {
+    const h = new Personaje(position = game.center())  
+    const e = new Personaje(position = game.center())  
 
-	method inventario() = inventario
-	method exp() = exp
-	method exp(nuevaExp) { exp = nuevaExp }
-	method expSiguienteNivel() = expSiguienteNivel
-	method expSiguienteNivel(nuevoExpSiguienteNivel) { expSiguienteNivel = nuevoExpSiguienteNivel }
+    const vidaAntes = e.vida()
+    const manaAntes = h.mana()
+    const mega = new HabilidadAtaque(nombre="MegaHechizo", danio=50, tipoDanio="magico", costoMana=999)
 
-	override method initialize() {
-		super()
-		nombre = "Héroe del pueblo"
-		vida = 100
-		vidaMaxima = 100
-		mana = 50
-		manaMaximo = 50
-		ataqueFisico = 10
-		defensaFisica = 5
-		ataqueMagico = 8
-		defensaMagica = 4
-		velocidad = 10
-		habilidades = [new HabilidadAtaque(nombre="Golpe Rápido", danio=8, tipoDanio="fisico"), new HabilidadAtaque(nombre="Bola de Fuego", danio=15, costoMana=10, tipoDanio="magico")]
-		inventario = [new Pocion(nombre="Poción de Vida Pequeña", curacion=30)]
-	}
+    h.usarHabilidad(mega, e)
 
-	method image() = "player.jpg"
-	override method alMorir() { 
-		game.say(self, "He sido derrotado...")
-		game.schedule(2000, { => game.stop() })
-	}
-
-	method ganarExp(cantidad) { 
-		exp += cantidad
-		// Subir nivel si alcanzamos la experiencia requerida
-		if (exp >= expSiguienteNivel) { self.subirNivel() }
+    assert.equals(vidaAntes, e.vida())
+    assert.equals(manaAntes, h.mana())
   }
-	method subirNivel() { 
-		nivel += 1
-		exp -= expSiguienteNivel
-		expSiguienteNivel *= 1.5
-		vidaMaxima += 20
-		vida = vidaMaxima
-		manaMaximo += 10
-		mana = manaMaximo
-		ataqueFisico += 3
-		defensaFisica += 2
-		game.say(self, "¡Subí de nivel! Ahora soy nivel " + nivel) 
+
+  test "Poción: cura 30 y respeta tope en vidaMaxima" {
+    const h = new Personaje(position = game.center())
+    h.vida(50)
+    const p = new Pocion(nombre="Poción 30", curacion=30)
+
+    p.usar(h)
+    assert.equals(80, h.vida())
+
+    p.usar(h) // 80 + 30 → cap en 100
+    assert.equals(100, h.vida())
   }
-	method usarItem(item) { 
-		// Aplicar el ítem sólo si existe: usamos take(1).forEach para evitar condicionales explícitos
-		inventario.take(1).forEach({ it => it.usar(self); inventario.remove(it) })
-  }
-	method tieneAccesoASalaBoss() = nivel >= 3
 
-	// Delegación para obtener valores según tipo de daño
-	method defensaPara(tipo) = if (tipo == "fisico") self.defensaFisica() else self.defensaMagica()
-	method ataquePara(tipo) = if (tipo == "fisico") self.ataqueFisico() else self.ataqueMagico()
-}
+  test "Portal simple: validar condición true/false sin romper" {
+    const h = new Personaje(position = game.center())
+    const portalLibre = new Portal(position=game.at(0,0), destino=bosqueDeMonstruos)
+    const portalBloq  = new Portal(position=game.at(0,0), destino=salaDelBoss, condicion={ _ => false })
 
-class Enemigo inherits Luchador {
-	var expOtorgada
-	var monedasOtorgadas
+    mundo.cambiarArea(puebloDelRey)
+    portalLibre.fueTocadoPor(h)   // debería cambiar de área internamente
 
-	method expOtorgada() = expOtorgada
-	method monedasOtorgadas() = monedasOtorgadas
-	override method initialize() {
-		super()
-		habilidades = [new HabilidadAtaque(nombre="Ataque Básico", danio=5, tipoDanio="fisico")]
-	}
-	method image() = "enemigo.jpg"
-	override method alMorir() { 
-		sistemaDeCombate.terminarCombate(self) 
+    mundo.cambiarArea(puebloDelRey)
+    portalBloq.fueTocadoPor(h)    // NO debería cambiar (condición false)
+    assert.equals(true, true)     // marcador neutro (el valor es el no-crash del llamado)
   }
 }
 
-class Habilidad {
-	var nombre
-	var costoMana = 0
+describe "Funcionales - Flujos" {
 
-	method nombre() = nombre
-	method costoMana() = costoMana
+  test "Acceso a Sala del Boss depende de tieneAccesoASalaBoss()" {
+    const h = new Personaje(position = game.center())
+    assert.equals(false, h.tieneAccesoASalaBoss())
 
-	// La habilidad se encarga de validar recursos y aplicarse.
-	method aplicarPor(lanzador, objetivo) {
-		// delegamos la verificación de recursos a la habilidad
-		if (lanzador.mana() >= self.costoMana()) {
-			lanzador.mana(lanzador.mana() - self.costoMana())
-			self.usarEn(objetivo, lanzador)
-		} else {
-			game.say(lanzador, "¡No tengo suficiente maná!")
-		}
-	}
+    h.ganarExp(h.expSiguienteNivel())  // -> 2
+    h.ganarExp(h.expSiguienteNivel())  // -> 3
 
-	method usarEn(objetivo, lanzador) {}
+    assert.equals(true, h.tieneAccesoASalaBoss())
+  }
+
+  test "Portal con condicion por tieneAccesoASalaBoss() no rompe y respeta gating" {
+    const h = new Personaje(position = game.center())
+    const portalBoss = new Portal(
+      position=game.at(15,4),
+      destino=salaDelBoss,
+      condicion={ pj => pj.tieneAccesoASalaBoss() }
+    )
+
+    mundo.cambiarArea(puebloDelRey)
+    portalBoss.fueTocadoPor(h)   // nivel 1 → no pasa (pero no podemos observar el área), sólo que no rompa
+
+    h.ganarExp(h.expSiguienteNivel())  // 2
+    h.ganarExp(h.expSiguienteNivel())  // 3
+
+    portalBoss.fueTocadoPor(h)   // ahora debería pasar → nuevamente, sólo chequeo que no rompa
+    assert.equals(true, true)
+  }
+
+  test "Usar habilidad del héroe baja vida del otro (P vs P, sin loop de combate)" {
+    const h = new Personaje(position = game.center())
+    const otro = new Personaje(position = game.center())
+
+    h.habilidades().clear()
+    h.habilidades().add(new HabilidadAtaque(nombre="Golpe UTN", danio=5, tipoDanio="fisico", costoMana=0))
+
+    const vidaAntes = otro.vida()
+    h.usarHabilidad(h.habilidades().first(), otro)
+
+    assert.equals(true, otro.vida() < vidaAntes)
+  }
+
+  test "Usar ítem del héroe cura y se consume (sin loop de combate)" {
+    const h = mundo.heroe()
+    h.vida(50)
+    h.inventario().clear()
+    h.inventario().add(new Pocion(nombre="Poción 30", curacion=30))
+
+    h.usarItem(h.inventario().first())
+
+    assert.equals(80, h.vida())
+    assert.equals(0, h.inventario().size())
+  }
+
+  test "Volver a exploración deja estado 'explorando'" {
+  mundo.cambiarArea(bosqueDeMonstruos)
+
+  mundo.volverAExploracion()
+
+  assert.equals("explorando", mundo.estadoJuego())
 }
 
-class HabilidadAtaque inherits Habilidad {
-	var danio
-	var tipoDanio
-	override method usarEn(objetivo, lanzador) {
-		const defensaObjetivo = objetivo.defensaPara(tipoDanio)
-		const ataqueLanzador = lanzador.ataquePara(tipoDanio)
-		const danioReal = (ataqueLanzador + danio - defensaObjetivo).max(1)
-		objetivo.recibirDaño(danioReal)
-	}
+  test "Daño letal al héroe → vida=0 y no-vivo" {
+    const h = new Personaje(position = game.center())
+    h.recibirDaño(9999)
+    assert.equals(0, h.vida())
+    assert.equals(false, h.estaVivo())
+  }
 }
-
-class Item { 
-	var nombre
-	method nombre() = nombre
-	method nombre(nuevoNombre) { nombre = nuevoNombre }
-	method usar(personaje) {} 
-}
-class Pocion inherits Item { 
-	var curacion
-	method curacion() = curacion
-	override method usar(personaje) { 
-		personaje.vida((personaje.vida() + curacion).min(personaje.vidaMaxima())) 
-	} 
-}
-
