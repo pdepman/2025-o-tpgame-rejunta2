@@ -43,9 +43,10 @@ object sistemaDeCombate {
 	
 	method iniciarCombate(unHeroe, unEnemigo) {
 		heroe = unHeroe
-    enemigo = unEnemigo
+    	enemigo = unEnemigo
 		uiCombate.dibujarPantallaDeCombate(heroe, enemigo)
 		turno = if (heroe.velocidad() >= enemigo.velocidad()) heroe else enemigo
+		self.mostrarMenuHeroe()
 		self.siguienteTurno()
 	}
 	
@@ -136,7 +137,7 @@ object sistemaDeCombate {
 			}
 		})
 
-		// Mantenemos las opciones de objeto/huyir por tecla numérica como fallback (3 y 4)
+		// Mantenemos las opciones de objeto/huir por tecla numérica como fallback (3 y 4)
 		keyboard.any().onPressDo({ key => self.procesarAccionHeroe(key.asChar()) })
 	}
 	

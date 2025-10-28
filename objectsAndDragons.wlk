@@ -171,10 +171,11 @@ class Item {
 	method usar(personaje) {} 
 }
 class Pocion inherits Item { 
-	var curacion
+	var property  curacion
 	method curacion() = curacion
 	override method usar(personaje) { 
 		personaje.vida((personaje.vida() + curacion).min(personaje.vidaMaxima())) 
 	} 
 }
+
 

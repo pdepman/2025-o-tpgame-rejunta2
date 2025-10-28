@@ -4,12 +4,13 @@ import combateYUI.*
 
 object bosqueDeMonstruos {
 	const probabilidadCombate = 20
-	var visuals = []
+	var visuals = []	
 
 	method cargar() {
 		game.title("Bosque de Monstruos")
 		const portalPueblo = new Portal(position = game.at(15, 4), destino = puebloDelRey)
 		const fondo = new Decoracion(image="bosque.png", position=game.origin())
+		var areaActual = bosqueDeMonstruos
 		game.addVisual(fondo)
 		visuals.add(fondo)
 		game.addVisual(portalPueblo)
@@ -85,24 +86,24 @@ object mundo {
     keyboard.w().onPressDo({ => self.moverHeroe(0, 1) })
     keyboard.s().onPressDo({ => self.moverHeroe(0, -1) })
     keyboard.a().onPressDo({ => self.moverHeroe(-1, 0) })
-		keyboard.d().onPressDo({ => self.moverHeroe(1, 0) }) 
+	keyboard.d().onPressDo({ => self.moverHeroe(1, 0) }) 
 
 		// iniciar combate manual en el bosque al tocar la e
-				keyboard.e().onPressDo({ =>
+	keyboard.e().onPressDo({ =>
 					// Debug: mostrar que se pulsó E y el contexto (área + estado)
-					game.title("E pulsada en area=" + areaActual.background() + " estado=" + estadoJuego)
-					game.say(heroe, "E pulsada: comprobando inicio de combate")
-					if (areaActual.background() == bosqueDeMonstruos.background() and estadoJuego == "explorando") {
+			game.title("E pulsada en area=" + areaActual.background() + " estado=" + estadoJuego)
+			game.say(heroe, "E pulsada: comprobando inicio de combate")
+			if (areaActual.background() == bosqueDeMonstruos.background() and estadoJuego == "explorando") {
 						// Generar enemigo aleatorio simple
-						const listaEnemigos = [
-							new Enemigo(nombre="Lobo Salvaje", vida=40, vidaMaxima=40, mana=10, manaMaximo=10, ataqueFisico=8, defensaFisica=3, ataqueMagico=0, defensaMagica=1, velocidad=12, expOtorgada=30, monedasOtorgadas=10, position=game.center()),
-							new Enemigo(nombre="Araña Gigante", vida=30, vidaMaxima=30, mana=5, manaMaximo=5, ataqueFisico=6, defensaFisica=2, ataqueMagico=0, defensaMagica=1, velocidad=14, expOtorgada=20, monedasOtorgadas=5, position=game.center())
-						]
-						const enemigo = listaEnemigos[0.randomUpTo(listaEnemigos.size()-1)]
-						game.title("Iniciando combate contra " + enemigo.nombre())
+				const listaEnemigos = [
+					new Enemigo(nombre="Lobo Salvaje", vida=40, vidaMaxima=40, mana=10, manaMaximo=10, ataqueFisico=8, defensaFisica=3, ataqueMagico=0, defensaMagica=1, velocidad=8, expOtorgada=30, monedasOtorgadas=10, position=game.center()),
+					new Enemigo(nombre="Araña Gigante", vida=30, vidaMaxima=30, mana=5, manaMaximo=5, ataqueFisico=6, defensaFisica=2, ataqueMagico=0, defensaMagica=1, velocidad=8, expOtorgada=20, monedasOtorgadas=5, position=game.center())
+					]
+					const enemigo = listaEnemigos.anyOne()
+					game.title("Iniciando combate contra " + enemigo.nombre())
 						// Mostrar un mensaje corto antes de cambiar de pantalla
-						game.say(heroe, "Iniciando combate con " + enemigo.nombre())
-						self.cambiarACombate(enemigo)
+					game.say(heroe, "Iniciando combate con " + enemigo.nombre())
+					self.cambiarACombate(enemigo)
 					}
 				})
   }
@@ -121,6 +122,7 @@ object mundo {
 	areaActual.cargar()
 	game.addVisualCharacter(heroe)
 	heroe.position(game.center())
+	self.configurarTeclasExploracion()
 	// Registrar colisión para portales/visuals del área cargada
 	game.whenCollideDo(heroe, { otro => otro.fueTocadoPor(heroe) })
   }
