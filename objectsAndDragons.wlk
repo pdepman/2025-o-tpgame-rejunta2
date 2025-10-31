@@ -4,18 +4,18 @@ import combateYUI.*
 
 class Luchador {
 	var nombre
-	var nivel = 1
+	var property nivel = 1
 	var vida
-	var vidaMaxima // LO USAMOS DE REFERENCIA PARA TENER UN MAXIMO DE VIDA 
+	var property vidaMaxima // LO USAMOS DE REFERENCIA PARA TENER UN MAXIMO DE VIDA 
 	var mana
-	var manaMaximo // LO MISMO QUE VIDA MAXIMA
-	var ataqueFisico
-	var defensaFisica
-	var ataqueMagico
-	var defensaMagica
-	var velocidad
+	var property manaMaximo // LO MISMO QUE VIDA MAXIMA
+	var property ataqueFisico
+	var property defensaFisica
+	var property ataqueMagico
+	var property defensaMagica
+	var property velocidad
 	var property position
-	var habilidades = []
+	var property habilidades = []
 
 	method nombre() = nombre
 	method nombre(nuevoNombre) { nombre = nuevoNombre }
@@ -82,7 +82,7 @@ class Personaje inherits Luchador {
 		inventario = [new Pocion(nombre="Poción de Vida Pequeña", curacion=30)]
 	}
 
-	method image() = "player.jpg"
+	method image() = "player.png"
 	override method alMorir() { 
 		game.say(self, "He sido derrotado...")
 		game.schedule(2000, { => game.stop() })
@@ -117,8 +117,8 @@ class Personaje inherits Luchador {
 }
 
 class Enemigo inherits Luchador {
-	var expOtorgada
-	var monedasOtorgadas
+	var property expOtorgada
+	var property monedasOtorgadas
 
 	method expOtorgada() = expOtorgada
 	method monedasOtorgadas() = monedasOtorgadas
@@ -128,13 +128,14 @@ class Enemigo inherits Luchador {
 	}
 	method image() = "enemigo.jpg"
 	override method alMorir() { 
-		sistemaDeCombate.terminarCombate(self) 
+		sistemaDeCombate.finalizarCombate(self) 
   }
 }
 
+
 class Habilidad {
-	var nombre
-	var costoMana = 0
+	var property nombre
+	var property costoMana = 0
 
 	method nombre() = nombre
 	method costoMana() = costoMana
@@ -154,8 +155,8 @@ class Habilidad {
 }
 
 class HabilidadAtaque inherits Habilidad {
-	var danio
-	var tipoDanio
+	var property danio
+	var property tipoDanio
 	override method usarEn(objetivo, lanzador) {
 		const defensaObjetivo = objetivo.defensaPara(tipoDanio)
 		const ataqueLanzador = lanzador.ataquePara(tipoDanio)
@@ -169,6 +170,7 @@ class Item {
 	method nombre() = nombre
 	method nombre(nuevoNombre) { nombre = nuevoNombre }
 	method usar(personaje) {} 
+	method esPocion() = false
 }
 class Pocion inherits Item { 
 	var property  curacion
@@ -176,6 +178,5 @@ class Pocion inherits Item {
 	override method usar(personaje) { 
 		personaje.vida((personaje.vida() + curacion).min(personaje.vidaMaxima())) 
 	} 
+	override method esPocion() = true
 }
-
-

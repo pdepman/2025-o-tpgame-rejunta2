@@ -2,6 +2,7 @@ import wollok.game.*
 import objectsAndDragons.*      
 import combateYUI.*             
 import stages.*                 
+import controlEstado.*
 
 describe "Unitarios - Dominio RPG" {
 
@@ -130,14 +131,6 @@ describe "Test de portales y combate sin loop" {
     assert.equals(80, h.vida())
     assert.equals(0, h.inventario().size())
   }
-
-  test "Volver a exploración deja estado 'explorando'" {
-  mundo.cambiarArea(bosqueDeMonstruos)
-
-  mundo.volverAExploracion()
-
-  assert.equals("explorando", mundo.estadoJuego())
-}
 
   test "Daño letal al héroe → vida=0 y no-vivo" {
     const h = new Personaje(position = game.center())

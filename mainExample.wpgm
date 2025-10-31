@@ -2,16 +2,19 @@ import wollok.game.*
 import objectsAndDragons.*
 import combateYUI.*
 import stages.*
+import controlEstado.*
 
 program mainExample {
-   game.title("RPG por turnos")
+  game.title("RPG por turnos")
 
-  game.width(16)
-  game.height(9)
+  game.width(20)
+  game.height(12)
   game.cellSize(48)
- 
-  
+
   mundo.iniciar() 
   
+  keyboard.any().onPressDo { tecla =>
+    mundo.procesarTeclaGlobal(tecla)}
+
   game.start()
 }
