@@ -5,6 +5,7 @@ import stages.*
 
 program mainExample {
    game.title("RPG por turnos")
+   console.println( 'RPG por Turnos')
 
   game.width(16)
   game.height(9)

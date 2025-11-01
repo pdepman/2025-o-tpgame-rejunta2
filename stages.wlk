@@ -76,35 +76,35 @@ object mundo {
 
 	method heroe() = heroe
 	method iniciar() { 
+		console.println('Iniciar mundo')
 		// Usar cambiarArea para centralizar la lógica de carga de áreas
 		self.cambiarArea(areaActual)
 		self.configurarTeclasExploracion()
 	}
 	method estadoJuego() = estadoJuego
 	method configurarTeclasExploracion() { 
-    keyboard.w().onPressDo({ => self.moverHeroe(0, 1) })
-    keyboard.s().onPressDo({ => self.moverHeroe(0, -1) })
-    keyboard.a().onPressDo({ => self.moverHeroe(-1, 0) })
-		keyboard.d().onPressDo({ => self.moverHeroe(1, 0) }) 
+		console.println('Configurar Teclas')
 
 		// iniciar combate manual en el bosque al tocar la e
-				keyboard.e().onPressDo({ =>
-					// Debug: mostrar que se pulsó E y el contexto (área + estado)
-					game.title("E pulsada en area=" + areaActual.background() + " estado=" + estadoJuego)
-					game.say(heroe, "E pulsada: comprobando inicio de combate")
-					if (areaActual.background() == bosqueDeMonstruos.background() and estadoJuego == "explorando") {
-						// Generar enemigo aleatorio simple
-						const listaEnemigos = [
-							new Enemigo(nombre="Lobo Salvaje", vida=40, vidaMaxima=40, mana=10, manaMaximo=10, ataqueFisico=8, defensaFisica=3, ataqueMagico=0, defensaMagica=1, velocidad=12, expOtorgada=30, monedasOtorgadas=10, position=game.center()),
-							new Enemigo(nombre="Araña Gigante", vida=30, vidaMaxima=30, mana=5, manaMaximo=5, ataqueFisico=6, defensaFisica=2, ataqueMagico=0, defensaMagica=1, velocidad=14, expOtorgada=20, monedasOtorgadas=5, position=game.center())
-						]
-						const enemigo = listaEnemigos[0.randomUpTo(listaEnemigos.size()-1)]
-						game.title("Iniciando combate contra " + enemigo.nombre())
-						// Mostrar un mensaje corto antes de cambiar de pantalla
-						game.say(heroe, "Iniciando combate con " + enemigo.nombre())
-						self.cambiarACombate(enemigo)
-					}
-				})
+			keyboard.e().onPressDo {
+								// Debug: mostrar que se pulsó E y el contexto (área + estado)
+				game.title("E pulsada en area=" + areaActual.background() + " estado=" + estadoJuego)
+				console.println("E pulsada: comprobando inicio de combate")
+				console.println(estadoJuego)
+				console.println(areaActual.background() == bosqueDeMonstruos.background())
+				if (/*areaActual.background() == bosqueDeMonstruos.background() and */estadoJuego == "explorando") {
+					// Generar enemigo aleatorio simple
+					const listaEnemigos = [
+						new Enemigo(nombre="Lobo Salvaje", vida=40, vidaMaxima=40, mana=10, manaMaximo=10, ataqueFisico=8, defensaFisica=3, ataqueMagico=0, defensaMagica=1, velocidad=12, expOtorgada=30, monedasOtorgadas=10, position=game.center()),
+						new Enemigo(nombre="Araña Gigante", vida=30, vidaMaxima=30, mana=5, manaMaximo=5, ataqueFisico=6, defensaFisica=2, ataqueMagico=0, defensaMagica=1, velocidad=14, expOtorgada=20, monedasOtorgadas=5, position=game.center())
+					]
+					const enemigo = listaEnemigos[0]
+					//game.title("Iniciando combate contra " + enemigo.nombre())
+					// Mostrar un mensaje corto antes de cambiar de pantalla
+					//game.say(heroe, "Iniciando combate con " + enemigo.nombre())
+					self.cambiarACombate(enemigo)
+				}
+			}
   }
 	method moverHeroe(dx, dy) { 
     if (estadoJuego == "explorando") { 
