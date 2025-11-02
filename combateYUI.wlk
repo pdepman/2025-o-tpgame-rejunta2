@@ -2,48 +2,91 @@ import wollok.game.*
 import objectsAndDragons.*
 import stages.*
 
+class BarraVida {
+	var owner
+	var property position
+	var barraFondo 
+	var barraVida 
+	var labelNombre 
+	
+	const ANCHO = 6 
+	const ALTO = 0.3 
+
+	method initialize(unOwner, unaPosicion, colorBarra) {
+		owner = unOwner
+		position = unaPosicion
+		
+		barraFondo = new Rectangle(width=ANCHO, height=ALTO, color=Color.darkGray, position=position)
+		barraVida = new Rectangle(width=ANCHO, height=ALTO, color=colorBarra, position=position)
+		
+		labelNombre = new Label(text=owner.nombre(), 
+								position=position.up(0.15 + ALTO).right(ANCHO / 2 - 0.5), 
+								color=Color.white, 
+								size=12)
+		
+		game.addVisual(barraFondo)
+		game.addVisual(barraVida)
+		game.addVisual(labelNombre)
+	}
+
+	method actualizar() {
+		const porcentaje = owner.vida() / owner.vidaMaxima()
+		const nuevoAncho = ANCHO * porcentaje
+		
+		barraVida.width(nuevoAncho.max(0)) 
+		
+		labelNombre.text(owner.nombre() + " V:" + owner.vida() + "/" + owner.vidaMaxima())
+	}
+	
+	method limpiar() {
+		game.removeVisual(barraFondo)
+		game.removeVisual(barraVida)
+		game.removeVisual(labelNombre)
+	}
+}
+
 object uiCombate {
-	var uiHeroe = null
-	var uiEnemigo = null
+	var barraHeroe = null 
+	var barraEnemigo = null 
 	
 	method dibujarPantallaDeCombate(heroe, enemigo) {
 		game.clear()
 		const fondo = new Decoracion(image="battle_bg.png", position=game.origin())
-		uiHeroe = new Decoracion(image="textbox.png", position=game.at(12, 2))
-		uiEnemigo = new Decoracion(image="textbox.png", position=game.at(1, 7))
-		
 		game.addVisual(fondo)
-		game.addVisual(uiHeroe)
-		game.addVisual(uiEnemigo)
 		
-		heroe.position(game.at(3, 3))
-		enemigo.position(game.at(12, 6))
+		heroe.position(game.at(3, 3)) 
+		enemigo.position(game.at(12, 6)) 
 		game.addVisual(heroe)
 		game.addVisual(enemigo)
+		
+		barraHeroe = new BarraVida(owner=heroe, position=game.at(3, 1), colorBarra=Color.red) 
+		barraEnemigo = new BarraVida(owner=enemigo, position=game.at(10, 8), colorBarra=Color.orange)
 		
 		self.actualizarUI(heroe, enemigo)
 	}
 	
 	method actualizarUI(heroe, enemigo) {
-		game.say(uiHeroe, heroe.nombre() + " | Vida: " + heroe.vida() + "/" + heroe.vidaMaxima())
-		game.say(uiEnemigo, enemigo.nombre() + " | Vida: " + enemigo.vida() + "/" + enemigo.vidaMaxima())
+		barraHeroe.actualizar()
+		barraEnemigo.actualizar()
 	}
 	
 	method limpiarPantalla() { 
 		game.clear() 
-		uiHeroe = null
-		uiEnemigo = null
+		if (barraHeroe != null) { barraHeroe.limpiar() }
+		if (barraEnemigo != null) { barraEnemigo.limpiar() }
+		barraHeroe = null
+		barraEnemigo = null
 	}
 }
 
 object sistemaDeCombate {
 	var heroe = null
-  	var enemigo = null
-  	var turno = null
+	var enemigo = null
+	var turno = null
 	
 	method iniciarCombate(unHeroe, unEnemigo) {
 		heroe = unHeroe
-    	enemigo = unEnemigo
+		enemigo = unEnemigo
 		uiCombate.dibujarPantallaDeCombate(heroe, enemigo)
 		turno = if (heroe.velocidad() >= enemigo.velocidad()) heroe else enemigo
 		self.mostrarMenuHeroe()
@@ -53,12 +96,22 @@ object sistemaDeCombate {
 	method siguienteTurno() {
 		if (heroe.estaVivo() and enemigo.estaVivo()) {
 			if (turno == heroe) { self.mostrarMenuHeroe() } else { self.turnoEnemigo() }
+		} else {
+			 self.terminarCombate(if (heroe.estaVivo()) enemigo else null)
 		}
 	}
 	
 	method mostrarMenuHeroe() {
-		game.title("Elige: F/G/H/J = Ataques | 3 = Poción | 4 = Huir")
-		// Limpiamos listeners previos por si quedaron registrados
+		const habs = heroe.habilidades()
+		const menuText = "ACCIONES: " + 
+			(habs.size() >= 1 ? "[F] " + habs.get(0).nombre() + " | " : "") + 
+			(habs.size() >= 2 ? "[G] " + habs.get(1).nombre() + " | " : "") + 
+			(habs.size() >= 3 ? "[H] " + habs.get(2).nombre() + " | " : "") + 
+			(habs.size() >= 4 ? "[J] " + habs.get(3).nombre() + " | " : "") + 
+			"[3] Poción | [4] Huir (Maná:" + heroe.mana() + ")"
+			
+		game.title(menuText) 
+		
 		keyboard.any().clearListeners()
 		keyboard.f().clearListeners()
 		keyboard.g().clearListeners()
@@ -66,29 +119,20 @@ object sistemaDeCombate {
 		keyboard.j().clearListeners()
 
 		keyboard.f().onPressDo({ =>
-			// Slot 1 (primer ataque)
-			keyboard.f().clearListeners()
-			keyboard.g().clearListeners()
-			keyboard.h().clearListeners()
-			keyboard.j().clearListeners()
 			keyboard.any().clearListeners()
 			const hab = heroe.habilidades().take(1).last()
 			if (hab != null) {
 				heroe.usarHabilidad(hab, enemigo)
 				uiCombate.actualizarUI(heroe, enemigo)
 				turno = enemigo
-				game.schedule(1500, { => self.siguienteTurno() })
+				game.schedule(1500, { => self.siguienteTurnido() })
 			} else {
 				game.say(heroe, "No conozco ese ataque")
+				self.mostrarMenuHeroe() 
 			}
 		})
 
 		keyboard.g().onPressDo({ =>
-			// Slot 2 (segundo ataque)
-			keyboard.f().clearListeners()
-			keyboard.g().clearListeners()
-			keyboard.h().clearListeners()
-			keyboard.j().clearListeners()
 			keyboard.any().clearListeners()
 			const hab = heroe.habilidades().take(2).last()
 			if (hab != null) {
@@ -98,15 +142,10 @@ object sistemaDeCombate {
 				game.schedule(1500, { => self.siguienteTurno() })
 			} else {
 				game.say(heroe, "No conozco ese ataque")
+				self.mostrarMenuHeroe() 
 			}
 		})
-
 		keyboard.h().onPressDo({ =>
-			// Slot 3 (tercer ataque, si existe)
-			keyboard.f().clearListeners()
-			keyboard.g().clearListeners()
-			keyboard.h().clearListeners()
-			keyboard.j().clearListeners()
 			keyboard.any().clearListeners()
 			const hab = heroe.habilidades().take(3).last()
 			if (hab != null) {
@@ -116,15 +155,10 @@ object sistemaDeCombate {
 				game.schedule(1500, { => self.siguienteTurno() })
 			} else {
 				game.say(heroe, "No conozco ese ataque")
+				self.mostrarMenuHeroe()
 			}
 		})
-
 		keyboard.j().onPressDo({ =>
-			// Slot 4 (cuarto ataque, si existe)
-			keyboard.f().clearListeners()
-			keyboard.g().clearListeners()
-			keyboard.h().clearListeners()
-			keyboard.j().clearListeners()
 			keyboard.any().clearListeners()
 			const hab = heroe.habilidades().take(4).last()
 			if (hab != null) {
@@ -134,42 +168,35 @@ object sistemaDeCombate {
 				game.schedule(1500, { => self.siguienteTurno() })
 			} else {
 				game.say(heroe, "No conozco ese ataque")
+				self.mostrarMenuHeroe()
 			}
 		})
 
-		// Mantenemos las opciones de objeto/huir por tecla numérica como fallback (3 y 4)
 		keyboard.any().onPressDo({ key => self.procesarAccionHeroe(key.asChar()) })
 	}
-	
+
 	method procesarAccionHeroe(tecla) {
 		keyboard.any().clearListeners()
-		// Tabla de delegación: cada entrada mapea una tecla a una función que realiza la acción.
+		
 		const acciones = [
-			[ '1', { => 
-				heroe.usarHabilidad(heroe.habilidades().first(), enemigo)
-				uiCombate.actualizarUI(heroe, enemigo)
-				turno = enemigo
-				game.schedule(1500, { => self.siguienteTurno() })
-			} ],
-			[ '2', { => 
-				heroe.usarHabilidad(heroe.habilidades().last(), enemigo)
-				uiCombate.actualizarUI(heroe, enemigo)
-				turno = enemigo
-				game.schedule(1500, { => self.siguienteTurno() })
-			} ],
 			[ '3', { => 
-				// Usar take(1).forEach para aplicar el ítem sólo si existe, evitando ifs
-				heroe.inventario().take(1).forEach({ item => heroe.usarItem(item); uiCombate.actualizarUI(heroe, enemigo); turno = enemigo; game.schedule(1500, { => self.siguienteTurno() }) })
+				heroe.inventario().take(1).forEach({ item => 
+					heroe.usarItem(item); 
+					uiCombate.actualizarUI(heroe, enemigo); 
+					turno = enemigo; 
+					game.schedule(1500, { => self.siguienteTurno() }) 
+				})
+				self.mostrarMenuHeroe()
 			} ],
 			[ '4', { => self.terminarCombate(null) } ]
 		]
 
 		const entrada = acciones.filter({ a => a.first() == tecla }).first()
-		if (entrada != null) { entrada.last().apply() }
+		if (entrada != null) { entrada.last().apply() } else { self.mostrarMenuHeroe() }
 	}
 	
 	method turnoEnemigo() {
-		game.title("Turno de " + enemigo.nombre())
+		game.title("Turno de " + enemigo.nombre() + "...")
 		enemigo.usarHabilidad(enemigo.habilidades().first(), heroe)
 		
 		uiCombate.actualizarUI(heroe, enemigo)
@@ -180,6 +207,7 @@ object sistemaDeCombate {
 	method terminarCombate(enemigoDerrotado) {
 		if (enemigoDerrotado != null) {
 			heroe.ganarExp(enemigoDerrotado.expOtorgada())
+			heroe.ganarMonedas(enemigoDerrotado.monedasOtorgadas())
 		}
 		uiCombate.limpiarPantalla()
 		mundo.volverAExploracion()

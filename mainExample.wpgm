@@ -4,14 +4,13 @@ import combateYUI.*
 import stages.*
 
 program mainExample {
-   game.title("RPG por turnos")
+	game.title("RPG por turnos")
 
-  game.width(16)
-  game.height(9)
-  game.cellSize(48)
- 
-  
-  mundo.iniciar() 
-  
-  game.start()
+	game.width(16)
+	game.height(9)
+	game.cellSize(64)
+	
+	mundo.iniciar() 
+	
+	game.start()
 }

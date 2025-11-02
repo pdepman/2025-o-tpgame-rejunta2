@@ -2,20 +2,34 @@ import wollok.game.*
 import objectsAndDragons.*
 import combateYUI.*
 
+class ZonaInteractiva {
+	var property position
+	var property image
+	var property nombre
+	var property accion
+	var property esTienda = false 
+
+	method interactuar() { accion.apply() }
+}
+
 object bosqueDeMonstruos {
 	const probabilidadCombate = 20
-	var visuals = []	
+	var visuals = [] 	 
 
 	method cargar() {
-		game.title("Bosque de Monstruos")
-		const portalPueblo = new Portal(position = game.at(15, 4), destino = puebloDelRey)
+		game.title("Bosque de Monstruos - Área 1")
+		
+		const portalPueblo = new Portal(
+			position = game.at(15, 4), 
+			destino = puebloDelRey,
+			image = "portal_anim_1.png"
+		)
+		
 		const fondo = new Decoracion(image="bosque.png", position=game.origin())
-		var areaActual = bosqueDeMonstruos
 		game.addVisual(fondo)
 		visuals.add(fondo)
 		game.addVisual(portalPueblo)
 		visuals.add(portalPueblo)
-		// La tecla E se maneja globalmente en mundo.configurarTeclasExploracion()
 	}
 
 	method background() = "bosque.png"
@@ -23,29 +37,49 @@ object bosqueDeMonstruos {
 	method descargar() {
 		visuals.forEach { visual => game.removeVisual(visual) }
 		visuals = []
-		// No limpiamos listeners globales aca
 	}
 
-	method alMoverse() {
-		// Antes los encuentros eran aleatorios al moverse; ahora los dejamos controlados por la tecla E (SIGUE SIN FUNCIONAR >.< )
-	}
+	method alMoverse() {}
 }
 object puebloDelRey {
 	var visuals = []
 	method cargar() {
-		game.title("Pueblo del Rey")
-		const portalBosque = new Portal(position = game.at(0, 4), destino = bosqueDeMonstruos)
-		const portalBoss = new Portal(position = game.at(15, 4), destino = salaDelBoss, condicion = { areaHeroe => areaHeroe.tieneAccesoASalaBoss() })
-		const fondo = new Decoracion(image="pueblo.jpg", position=game.origin())
+		game.title("Pueblo del Rey - Área 2")
+		
+		const portalBosque = new Portal(
+			position = game.at(0, 4), 
+			destino = bosqueDeMonstruos,
+			image = "portal_anim_1.png"
+		)
+		const portalBoss = new Portal(
+			position = game.at(15, 4), 
+			destino = salaDelBoss, 
+			condicion = { areaHeroe => areaHeroe.tieneAccesoASalaBoss() },
+			image = "portal_anim_1.png"
+		)
+		
+		const fondo = new Decoracion(image="pueblito.jpg", position=game.origin())
+		
 		game.addVisual(fondo)
 		visuals.add(fondo)
 		game.addVisual(portalBosque)
 		game.addVisual(portalBoss)
 		visuals.add(portalBosque)
 		visuals.add(portalBoss)
+		
+		const zonaCuracion = new ZonaInteractiva(
+			position=game.at(8, 2), 
+			nombre="Fuente de Curación", 
+			accion={ => mundo.heroe().curarse() },
+			image="portal.png", 
+			esTienda=false
+		)
+		
+		game.addVisual(zonaCuracion)
+		visuals.add(zonaCuracion)
 	}
 
-	method background() = "pueblo.jpg"
+	method background() = "pueblito.jpg"
 	method descargar() { visuals.forEach { v => game.removeVisual(v) }; visuals = [] }
 	method alMoverse() {}
 }
@@ -53,110 +87,122 @@ object puebloDelRey {
 object salaDelBoss {
 	var visuals = []
 	method cargar() { 
-		game.title("Sala del Jefe Final")
-		// const fondo = new Decoracion(image="sala_jefe.png", position=game.origin())
-		// game.addVisual(fondo)
-		// un único portal que devuelva al pueblo (ciudad)
-		const fondo = new Decoracion(image="pueblo.jpg", position=game.origin())
+		game.title("Sala del Jefe Final - Área 3")
+		const fondo = new Decoracion(image="bosque.png", position=game.origin())
 		game.addVisual(fondo)
 		visuals.add(fondo)
-		const portalPueblo = new Portal(position = game.at(0, 4), destino = puebloDelRey)
+		
+		const portalPueblo = new Portal(
+			position = game.at(0, 4), 
+			destino = puebloDelRey,
+			image = "portal_anim_1.png"
+		)
+		
 		game.addVisual(portalPueblo)
 		visuals.add(portalPueblo)
+		
+		game.say(mundo.heroe(), "¡El Jefe Final está cerca!")
 	}
 
-	method background() = "pueblo.jpg"
+	method background() = "bosque.png"
 	method descargar() { visuals.forEach { v => game.removeVisual(v) }; visuals = [] }
 	method alMoverse() {}
 }
 
 object mundo {
-	const heroe = new Personaje(position = game.center())
-	var areaActual = puebloDelRey
+	const heroe = heroePrincipal 
+	var areaActual = puebloDelRey 
 	var estadoJuego = "explorando"
 
 	method heroe() = heroe
 	method iniciar() { 
-		// Usar cambiarArea para centralizar la lógica de carga de áreas
 		self.cambiarArea(areaActual)
 		self.configurarTeclasExploracion()
 	}
 	method estadoJuego() = estadoJuego
+	
 	method configurarTeclasExploracion() { 
-    keyboard.w().onPressDo({ => self.moverHeroe(0, 1) })
-    keyboard.s().onPressDo({ => self.moverHeroe(0, -1) })
-    keyboard.a().onPressDo({ => self.moverHeroe(-1, 0) })
-	keyboard.d().onPressDo({ => self.moverHeroe(1, 0) }) 
+		keyboard.any().clearListeners()
+		
+		keyboard.w().onPressDo({ => self.moverHeroe(0, 1) })
+		keyboard.s().onPressDo({ => self.moverHeroe(0, -1) })
+		keyboard.a().onPressDo({ => self.moverHeroe(-1, 0) })
+		keyboard.d().onPressDo({ => self.moverHeroe(1, 0) }) 
 
-		// iniciar combate manual en el bosque al tocar la e
-	keyboard.e().onPressDo({ =>
-					// Debug: mostrar que se pulsó E y el contexto (área + estado)
-			game.title("E pulsada en area=" + areaActual.background() + " estado=" + estadoJuego)
-			game.say(heroe, "E pulsada: comprobando inicio de combate")
+		keyboard.e().onPressDo({ =>
 			if (areaActual.background() == bosqueDeMonstruos.background() and estadoJuego == "explorando") {
-						// Generar enemigo aleatorio simple
 				const listaEnemigos = [
-					new Enemigo(nombre="Lobo Salvaje", vida=40, vidaMaxima=40, mana=10, manaMaximo=10, ataqueFisico=8, defensaFisica=3, ataqueMagico=0, defensaMagica=1, velocidad=8, expOtorgada=30, monedasOtorgadas=10, position=game.center()),
-					new Enemigo(nombre="Araña Gigante", vida=30, vidaMaxima=30, mana=5, manaMaximo=5, ataqueFisico=6, defensaFisica=2, ataqueMagico=0, defensaMagica=1, velocidad=8, expOtorgada=20, monedasOtorgadas=5, position=game.center())
-					]
-					const enemigo = listaEnemigos.anyOne()
-					game.title("Iniciando combate contra " + enemigo.nombre())
-						// Mostrar un mensaje corto antes de cambiar de pantalla
-					game.say(heroe, "Iniciando combate con " + enemigo.nombre())
-					self.cambiarACombate(enemigo)
-					}
-				})
-  }
+					new EnemigoSimple(
+						nombre="Lobo Salvaje", vida=40, vidaMaxima=40, mana=0, manaMaximo=0, 
+						ataqueFisico=8, defensaFisica=3, ataqueMagico=0, defensaMagica=1, 
+						velocidad=8, expOtorgada=30, monedasOtorgadas=10, position=game.center()
+					),
+					new EnemigoSimple(
+						nombre="Araña Gigante", vida=30, vidaMaxima=30, mana=0, manaMaximo=0, 
+						ataqueFisico=6, defensaFisica=2, ataqueMagico=0, defensaMagica=1, 
+						velocidad=8, expOtorgada=20, monedasOtorgadas=5, position=game.center()
+					)
+				]
+				const enemigo = listaEnemigos.anyOne()
+				game.say(heroe, "¡Un encuentro con " + enemigo.nombre() + "!")
+				self.cambiarACombate(enemigo)
+			}
+		})
+	}
+	
 	method moverHeroe(dx, dy) { 
-    if (estadoJuego == "explorando") { 
-      heroe.position(heroe.position().right(dx).up(dy))
-      areaActual.alMoverse() 
-      } 
-  }
+		if (estadoJuego == "explorando") { 
+			
+			var direccion = null
+			if (dx == 1) { direccion = Direction.Right }
+			else if (dx == -1) { direccion = Direction.Left }
+			else if (dy == 1) { direccion = Direction.Up }
+			else if (dy == -1) { direccion = Direction.Down }
+
+			if (direccion != null) {
+				game.move(heroe, direccion, 150) 
+			}
+			
+			areaActual.alMoverse() 
+		} 
+	}
+
 	method cambiarArea(nueva) { 
-	// Primero descargamos el área actual para remover sus visuales
-	areaActual.descargar()
-	areaActual = nueva
-	// Limpiamos la pantalla, cargamos la nueva área (para que boardGround se aplique) y luego añadimos el héroe
-	game.clear()
-	areaActual.cargar()
-	game.addVisualCharacter(heroe)
-	heroe.position(game.center())
-	self.configurarTeclasExploracion()
-	// Registrar colisión para portales/visuals del área cargada
-	game.whenCollideDo(heroe, { otro => otro.fueTocadoPor(heroe) })
-  }
+		areaActual.descargar()
+		areaActual = nueva
+		game.clear()
+		areaActual.cargar()
+		game.addVisual(heroe) 
+		heroe.position(game.center())
+		self.configurarTeclasExploracion()
+		game.whenCollideDo(heroe, { otro => otro.fueTocadoPor(heroe) })
+	}
 	method cambiarACombate(enemigo) { 
-    estadoJuego = "combate" 
-    sistemaDeCombate.iniciarCombate(heroe, enemigo) 
-  }
+		estadoJuego = "combate" 
+		sistemaDeCombate.iniciarCombate(heroe, enemigo) 
+	}
 	method volverAExploracion() { 
-	estadoJuego = "explorando"
-	game.clear()
-	areaActual.cargar()
-	game.addVisualCharacter(heroe)
-	// Registrar colisión para portales/visuals del área cargada
-	game.whenCollideDo(heroe, { otro => otro.fueTocadoPor(heroe) })
-  }
+		estadoJuego = "explorando"
+		game.clear()
+		areaActual.cargar()
+		game.addVisual(heroe)
+		game.whenCollideDo(heroe, { otro => otro.fueTocadoPor(heroe) })
+		heroe.animarIdle() 
+	}
 }
 
 class Portal {
-	var position
-	var destino
-	var condicion = { heroeParam => true }
+	var property position
+	var property destino
+	var property condicion = { heroeParam => true } 
+	var property image = "portal.png" 
 
-	method position() = position
-	method position(nuevaPosicion) { position = nuevaPosicion }
-	method destino() = destino
-	method condicion() = condicion
-	
-	method image() = "portal.png"
 	
 	method fueTocadoPor(jugador) {
 		if (condicion.apply(jugador)) {
 			mundo.cambiarArea(destino)
 		} else {
-			game.say(jugador, "Aún no cumplo los requisitos.")
+			game.say(jugador, "Nivel 10 requerido para pasar.")
 		}
 	}
 }
@@ -168,4 +214,3 @@ class Decoracion {
 	method image() = image
 	method position() = position
 }
-
