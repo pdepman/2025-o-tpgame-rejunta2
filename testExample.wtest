@@ -29,7 +29,7 @@ describe "Unitarios - Dominio RPG" {
   test "HabilidadAtaque respeta defensa y pega mínimo 1 (P vs P)" {
   const lanzador = new Personaje(position = game.center())
   const objetivo = new Personaje(position = game.center())
-  const hab = new HabilidadAtaque(nombre="Golpecito", danio=-999, tipoDanio="fisico", costoMana=0)
+  const hab = new HabilidadAtaqueFisico(nombre="Golpecito", danio=-999, costoMana=0)
 
   lanzador.usarHabilidad(hab, objetivo)
 
@@ -42,7 +42,7 @@ describe "Unitarios - Dominio RPG" {
 
     const vidaAntes = e.vida()
     const manaAntes = h.mana()
-    const mega = new HabilidadAtaque(nombre="MegaHechizo", danio=50, tipoDanio="magico", costoMana=999)
+    const mega = new HabilidadAtaqueMagico(nombre="MegaHechizo", danio=50, costoMana=999)
 
     h.usarHabilidad(mega, e)
 
@@ -110,8 +110,8 @@ describe "Test de portales y combate sin loop" {
     const h = new Personaje(position = game.center())
     const otro = new Personaje(position = game.center())
 
-    h.habilidades().clear()
-    h.habilidades().add(new HabilidadAtaque(nombre="Golpe UTN", danio=5, tipoDanio="fisico", costoMana=0))
+  h.habilidades().clear()
+  h.habilidades().add(new HabilidadAtaqueFisico(nombre="Golpe UTN", danio=5, costoMana=0))
 
     const vidaAntes = otro.vida()
     h.usarHabilidad(h.habilidades().first(), otro)

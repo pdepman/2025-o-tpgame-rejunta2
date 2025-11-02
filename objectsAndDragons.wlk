@@ -78,7 +78,10 @@ class Personaje inherits Luchador {
 		ataqueMagico = 8
 		defensaMagica = 4
 		velocidad = 10
-		habilidades = [new HabilidadAtaque(nombre="Golpe Rápido", danio=8, tipoDanio="fisico"), new HabilidadAtaque(nombre="Bola de Fuego", danio=15, costoMana=10, tipoDanio="magico")]
+			habilidades = [
+				new HabilidadAtaqueFisico(nombre="Golpe Rápido", danio=8),
+				new HabilidadAtaqueMagico(nombre="Bola de Fuego", danio=15, costoMana=10)
+			]
 		inventario = [new Pocion(nombre="Poción de Vida Pequeña", curacion=30)]
 	}
 
@@ -124,11 +127,11 @@ class Enemigo inherits Luchador {
 	method monedasOtorgadas() = monedasOtorgadas
 	override method initialize() {
 		super()
-		habilidades = [new HabilidadAtaque(nombre="Ataque Básico", danio=5, tipoDanio="fisico")]
+		habilidades = [new HabilidadAtaqueFisico(nombre="Ataque Básico", danio=5)]
 	}
 	method image() = "enemigo.jpg"
 	override method alMorir() { 
-		sistemaDeCombate.terminarCombate(self) 
+		mundo.combateActual().terminarCombate(self) 
   }
 }
 
@@ -155,13 +158,23 @@ class Habilidad {
 
 class HabilidadAtaque inherits Habilidad {
 	var danio
-	var tipoDanio
+	// El tipo de daño lo delegan las subclases vía método
+	method tipoDanio() = "fisico"
 	override method usarEn(objetivo, lanzador) {
-		const defensaObjetivo = objetivo.defensaPara(tipoDanio)
-		const ataqueLanzador = lanzador.ataquePara(tipoDanio)
+		const defensaObjetivo = objetivo.defensaPara(self.tipoDanio())
+		const ataqueLanzador = lanzador.ataquePara(self.tipoDanio())
 		const danioReal = (ataqueLanzador + danio - defensaObjetivo).max(1)
 		objetivo.recibirDaño(danioReal)
 	}
+}
+
+// Especializaciones que delegan el tipo de daño y concentran la lógica en HabilidadAtaque
+class HabilidadAtaqueFisico inherits HabilidadAtaque {
+	override method tipoDanio() = "fisico"
+}
+
+class HabilidadAtaqueMagico inherits HabilidadAtaque {
+	override method tipoDanio() = "magico"
 }
 
 class Item { 

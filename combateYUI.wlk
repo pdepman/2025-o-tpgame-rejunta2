@@ -36,26 +36,26 @@ object uiCombate {
 	}
 }
 
-object sistemaDeCombate {
+class Combate {
 	var heroe = null
-  	var enemigo = null
-  	var turno = null
-	
+	var enemigo = null
+	var turno = null
+
 	method iniciarCombate(unHeroe, unEnemigo) {
 		heroe = unHeroe
-    	enemigo = unEnemigo
+		enemigo = unEnemigo
 		uiCombate.dibujarPantallaDeCombate(heroe, enemigo)
 		turno = if (heroe.velocidad() >= enemigo.velocidad()) heroe else enemigo
 		self.mostrarMenuHeroe()
 		self.siguienteTurno()
 	}
-	
+
 	method siguienteTurno() {
 		if (heroe.estaVivo() and enemigo.estaVivo()) {
 			if (turno == heroe) { self.mostrarMenuHeroe() } else { self.turnoEnemigo() }
 		}
 	}
-	
+
 	method mostrarMenuHeroe() {
 		game.title("Elige: F/G/H/J = Ataques | 3 = Poción | 4 = Huir")
 		// Limpiamos listeners previos por si quedaron registrados
@@ -140,7 +140,7 @@ object sistemaDeCombate {
 		// Mantenemos las opciones de objeto/huir por tecla numérica como fallback (3 y 4)
 		keyboard.any().onPressDo({ key => self.procesarAccionHeroe(key.asChar()) })
 	}
-	
+
 	method procesarAccionHeroe(tecla) {
 		keyboard.any().clearListeners()
 		// Tabla de delegación: cada entrada mapea una tecla a una función que realiza la acción.
@@ -167,16 +167,16 @@ object sistemaDeCombate {
 		const entrada = acciones.filter({ a => a.first() == tecla }).first()
 		if (entrada != null) { entrada.last().apply() }
 	}
-	
+
 	method turnoEnemigo() {
 		game.title("Turno de " + enemigo.nombre())
 		enemigo.usarHabilidad(enemigo.habilidades().first(), heroe)
-		
+
 		uiCombate.actualizarUI(heroe, enemigo)
 		turno = heroe
 		game.schedule(1500, { => self.siguienteTurno() })
 	}
-	
+
 	method terminarCombate(enemigoDerrotado) {
 		if (enemigoDerrotado != null) {
 			heroe.ganarExp(enemigoDerrotado.expOtorgada())
