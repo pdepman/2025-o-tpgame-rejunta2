@@ -2,68 +2,110 @@ import wollok.game.*
 import objectsAndDragons.*
 import combateYUI.*
 import controlEstado.*
-object bosqueDeMonstruos {
-	var property  probabilidadCombate = 20
-	var visuals = []	
 
-	method cargar() {
-		game.title("Bosque de Monstruos")
-		const portalPueblo = new Portal(position = game.at(15, 4), destino = puebloDelRey)
+class Stage {
+	var visuals = []
+
+	method visuals() = visuals
+	method background() = "default.png"
+
+	method cargar() {}
+
+	method descargar() {
+		visuals.forEach { v => game.removeVisual(v) }
+		visuals = []
+	}
+
+	method alMoverse() {}
+}
+class ZonaInteractiva {
+	var property position
+	var property image
+	var property nombre
+	var property accion
+	var property esTienda = false 
+
+	method interactuar() { accion.apply() }
+}
+
+object bosqueDeMonstruos inherits Stage{
+	var property  probabilidadCombate = 20	
+	override method cargar(){ 
+	game.title("Bosque de Monstruos - Área 1")
+		
+		const portalPueblo = new Portal(
+			position = game.at(15, 4), 
+			destino = puebloDelRey,
+			image = "portal_anim_1.png"
+		)
+		
 		const fondo = new Decoracion(image="bosque.png", position=game.origin())
-		var areaActual = bosqueDeMonstruos
 		game.addVisual(fondo)
 		visuals.add(fondo)
 		game.addVisual(portalPueblo)
 		visuals.add(portalPueblo)
-		// La tecla E se maneja globalmente en mundo.configurarTeclasExploracion()
-	}
-	method background() = "bosque.png"
+	} }
 
-	method descargar() {
-		visuals.forEach { visual => game.removeVisual(visual) }
-		visuals = []
-		// No limpiamos listeners globales aca
-	}
-	method alMoverse() {
-		// Antes los encuentros eran aleatorios al moverse; ahora los dejamos controlados por la tecla E (SIGUE SIN FUNCIONAR >.< )
-	}
-}
-object puebloDelRey {
-	var visuals = []
-	method cargar() {
-		game.title("Pueblo del Rey")
-		const portalBosque = new Portal(position = game.at(0, 4), destino = bosqueDeMonstruos)
-		const portalBoss = new Portal(position = game.at(15, 4), destino = salaDelBoss, condicion = { areaHeroe => areaHeroe.tieneAccesoASalaBoss() })
-		const fondo = new Decoracion(image="pueblo.png", position=game.origin())
+object puebloDelRey inherits Stage {
+	override method cargar() {
+		game.title("Pueblo del Rey - Área 2")
+		
+		const portalBosque = new Portal(
+			position = game.at(0, 4), 
+			destino = bosqueDeMonstruos,
+			image = "portal_anim_1.png"
+		)
+		const portalBoss = new Portal(
+			position = game.at(15, 4), 
+			destino = salaDelBoss, 
+			condicion = { areaHeroe => areaHeroe.tieneAccesoASalaBoss() },
+			image = "portal_anim_1.png"
+		)
+		
+		const fondo = new Decoracion(image="pueblito.jpg", position=game.origin())
+		
 		game.addVisual(fondo)
 		visuals.add(fondo)
 		game.addVisual(portalBosque)
 		game.addVisual(portalBoss)
 		visuals.add(portalBosque)
 		visuals.add(portalBoss)
+		
+		const zonaCuracion = new ZonaInteractiva(
+			position=game.at(8, 2), 
+			nombre="Fuente de Curación", 
+			accion={ => mundo.heroe().curarse() },
+			image="portal.png", 
+			esTienda=false
+		)
+		
+		game.addVisual(zonaCuracion)
+		visuals.add(zonaCuracion)
 	}
 
-	method background() = "pueblo.png"
-	method descargar() { visuals.forEach { v => game.removeVisual(v) }; visuals = [] }
-	method alMoverse() {}
+	override method background() = "pueblito.jpg"
 }
 
-object salaDelBoss {
-	var visuals = []
-	method cargar() { 
-		game.title("Sala del Jefe Final")
-
-		const fondo = new Decoracion(image="pueblo.png", position=game.origin())
+object salaDelBoss inherits Stage {
+	override method cargar() { 
+		game.title("Sala del Jefe Final - Área 3")
+		const fondo = new Decoracion(image="bosque.png", position=game.origin())
 		game.addVisual(fondo)
 		visuals.add(fondo)
-		const portalPueblo = new Portal(position = game.at(0, 4), destino = puebloDelRey)
+		
+		const portalPueblo = new Portal(
+			position = game.at(0, 4), 
+			destino = puebloDelRey,
+			image = "portal_anim_1.png"
+		)
+		
 		game.addVisual(portalPueblo)
 		visuals.add(portalPueblo)
+		
+		game.say(mundo.heroe(), "¡El Jefe Final está cerca!")
 	}
 
-	method background() = "pueblo.png"
-	method descargar() { visuals.forEach { v => game.removeVisual(v) }; visuals = [] }
-	method alMoverse() {}
+	override method background() = "bosque.png"
 }
 
 object mundo {
@@ -79,6 +121,10 @@ object mundo {
  	method iniciar() {
 		self.cambiarEstadoControl(inicio)
  	}
+
+	method es_estadoActualControl(estado){
+		return estado == estadoActualControl;
+	}
 
  	method cambiarEstadoControl(nuevoEstado) {
 		if (estadoActualControl != null) {
@@ -108,11 +154,12 @@ object mundo {
  		heroe.position(game.center()) 
  		game.whenCollideDo(heroe, { otro => otro.fueTocadoPor(heroe) })
  		game.title("Explorando - " + areaActual.background()) 
+		explorando.teclas()
  	}
 
  	method iniciarLogicaCombate(enemigo) {
- 	    sistemaDeCombate.iniciarCombate(heroe, enemigo) 
- 	    self.cambiarEstadoControl(combate) 
+		sistemaDeCombate.iniciarCombate(heroe, enemigo)
+		self.cambiarEstadoControl(combate)  
  	}
 
  	method volverAExploracionDesdeCombate() {
@@ -124,6 +171,7 @@ object mundo {
  	    areaActual.cargar()
  	    game.addVisualCharacter(heroe)
  	    game.whenCollideDo(heroe, { otro => otro.fueTocadoPor(heroe) })
+		explorando.teclas()
  	}
 
  	method finalizarJuego(mensaje) {
@@ -135,25 +183,22 @@ object mundo {
 class Portal {
 	var property position
 	var property destino
-	var property condicion = { heroeParam => true }
+	var property condicion = { heroeParam => true } 
+	var property image = "portal.png" 
 
-	method position() = position
-	method position(nuevaPosicion) { position = nuevaPosicion }
-	method destino() = destino
-	
-	method image() = "portal.png"
 	
 	method fueTocadoPor(jugador) {
 		if (condicion.apply(jugador)) {
 			mundo.cambiarArea(destino)
 		} else {
-			game.say(jugador, "Aún no cumplo los requisitos.")
+			game.say(jugador, "Nivel 10 requerido para pasar.")
 		}
 	}
 }
+
 class Decoracion {
-	var property image
-	var property position
+	var image
+	var position
 
 	method image() = image
 	method position() = position

@@ -1,21 +1,22 @@
+import controlEstado.*
 import wollok.game.*
 import stages.*
 import combateYUI.*
 
 class Luchador {
 	var nombre
-	var property nivel = 1
+	var nivel = 1
 	var vida
-	var property vidaMaxima // LO USAMOS DE REFERENCIA PARA TENER UN MAXIMO DE VIDA 
+	var vidaMaxima 
 	var mana
-	var property manaMaximo // LO MISMO QUE VIDA MAXIMA
-	var property ataqueFisico
-	var property defensaFisica
-	var property ataqueMagico
-	var property defensaMagica
-	var property velocidad
+	var manaMaximo 
+	var ataqueFisico
+	var defensaFisica
+	var ataqueMagico
+	var defensaMagica
+	var velocidad
 	var property position
-	var property habilidades = []
+	var habilidades = []
 
 	method nombre() = nombre
 	method nombre(nuevoNombre) { nombre = nuevoNombre }
@@ -43,14 +44,12 @@ class Luchador {
 	
 	method recibirDaño(cantidad) {
 		vida = (vida - cantidad).max(0)
-		// delegar la reacción a la muerte a un método que puede ser sobreescrito
 		if (!self.estaVivo()) { self.alMorir() }
 	}
 	
-	method alMorir() { /* A DEFINIR MAS ADELANTE */ }
+	method alMorir() { }
 	
 	method usarHabilidad(habilidad, oponente) {
-		// Delegamos la validación y aplicación de la habilidad a la propia habilidad
 		habilidad.aplicarPor(self, oponente)
 	}
 }
@@ -59,16 +58,33 @@ class Personaje inherits Luchador {
 	var exp = 0
 	var expSiguienteNivel = 100
 	var inventario = []
+	var puntosDisponibles = 0
+	var monedas = 0
+	
+	var frame = 1
+	var property image = "player_idle_1.png"
+
+	method animarIdle() {
+		game.schedule(250, { 
+			frame = if (frame == 1) 2 else 1 
+			image = "player_idle_" + frame + ".png"
+			if (mundo.es_estadoActualControl(explorando)) { 
+				self.animarIdle() 
+			}
+		})
+	}
 
 	method inventario() = inventario
 	method exp() = exp
 	method exp(nuevaExp) { exp = nuevaExp }
 	method expSiguienteNivel() = expSiguienteNivel
 	method expSiguienteNivel(nuevoExpSiguienteNivel) { expSiguienteNivel = nuevoExpSiguienteNivel }
+	method puntosDisponibles() = puntosDisponibles
+	method monedas() = monedas
 
 	override method initialize() {
 		super()
-		nombre = "Héroe del pueblo"
+		nombre = "Héroe"
 		vida = 100
 		vidaMaxima = 100
 		mana = 50
@@ -78,11 +94,16 @@ class Personaje inherits Luchador {
 		ataqueMagico = 8
 		defensaMagica = 4
 		velocidad = 10
-		habilidades = [new HabilidadAtaque(nombre="Golpe Rápido", danio=8, tipoDanio="fisico"), new HabilidadAtaque(nombre="Bola de Fuego", danio=15, costoMana=10, tipoDanio="magico")]
-		inventario = [new Pocion(nombre="Poción de Vida Pequeña", curacion=30)]
+		habilidades = [
+			new HabilidadAtaqueFisico(nombre="Golpe Rápido", danio=8),
+			new HabilidadAtaqueMagico(nombre="Bola de Fuego", danio=15, costoMana=10)
+		]
+		inventario = [new Pocion(nombre="Poción Chica", curacion=30)]
+		
+		image = "player_idle_1.png"
+		self.animarIdle()
 	}
 
-	method image() = "player.png"
 	override method alMorir() { 
 		game.say(self, "He sido derrotado...")
 		game.schedule(2000, { => game.stop() })
@@ -90,9 +111,11 @@ class Personaje inherits Luchador {
 
 	method ganarExp(cantidad) { 
 		exp += cantidad
-		// Subir nivel si alcanzamos la experiencia requerida
 		if (exp >= expSiguienteNivel) { self.subirNivel() }
-  }
+	}
+	method ganarMonedas(cantidad) {
+		monedas += cantidad
+	}
 	method subirNivel() { 
 		nivel += 1
 		exp -= expSiguienteNivel
@@ -103,46 +126,39 @@ class Personaje inherits Luchador {
 		mana = manaMaximo
 		ataqueFisico += 3
 		defensaFisica += 2
+		puntosDisponibles += 5
 		game.say(self, "¡Subí de nivel! Ahora soy nivel " + nivel) 
-  }
+	}
 	method usarItem(item) { 
-		// Aplicar el ítem sólo si existe: usamos take(1).forEach
 		inventario.take(1).forEach({ it => it.usar(self); inventario.remove(it) })
-  }
-	method tieneAccesoASalaBoss() = nivel >= 3
+	}
+	method tieneAccesoASalaBoss() = nivel >= 10
 
-	// Delegación para obtener valores según tipo de daño
 	method defensaPara(tipo) = if (tipo == "fisico") self.defensaFisica() else self.defensaMagica()
 	method ataquePara(tipo) = if (tipo == "fisico") self.ataqueFisico() else self.ataqueMagico()
 }
 
 class Enemigo inherits Luchador {
-	var property expOtorgada
-	var property monedasOtorgadas
+	var expOtorgada
+	var monedasOtorgadas
 
 	method expOtorgada() = expOtorgada
 	method monedasOtorgadas() = monedasOtorgadas
 	override method initialize() {
 		super()
-		habilidades = [new HabilidadAtaque(nombre="Ataque Básico", danio=5, tipoDanio="fisico")]
+		habilidades = [new HabilidadAtaqueFisico(nombre="Ataque Básico", danio=5)]
 	}
-	method image() = "enemigo.jpg"
+	method image() = "goblin.png" 
+	
 	override method alMorir() { 
-		sistemaDeCombate.finalizarCombate(self) 
-  }
-}
-
-
+		/*mundo.combateActual().terminarCombate(self) */
+}}
 class Habilidad {
-	var property nombre
-	var property costoMana = 0
-
+	var nombre
+	var costoMana = 0
 	method nombre() = nombre
 	method costoMana() = costoMana
-
-	// La habilidad se encarga de validar recursos y aplicarse.
 	method aplicarPor(lanzador, objetivo) {
-		// delegamos la verificación de recursos a la habilidad
 		if (lanzador.mana() >= self.costoMana()) {
 			lanzador.mana(lanzador.mana() - self.costoMana())
 			self.usarEn(objetivo, lanzador)
@@ -150,19 +166,28 @@ class Habilidad {
 			game.say(lanzador, "¡No tengo suficiente maná!")
 		}
 	}
-
 	method usarEn(objetivo, lanzador) {}
 }
 
 class HabilidadAtaque inherits Habilidad {
-	var property danio
-	var property tipoDanio
+	var danio
+	// El tipo de daño lo delegan las subclases vía método
+	method tipoDanio() = "fisico"
 	override method usarEn(objetivo, lanzador) {
-		const defensaObjetivo = objetivo.defensaPara(tipoDanio)
-		const ataqueLanzador = lanzador.ataquePara(tipoDanio)
+		const defensaObjetivo = objetivo.defensaPara(self.tipoDanio())
+		const ataqueLanzador = lanzador.ataquePara(self.tipoDanio())
 		const danioReal = (ataqueLanzador + danio - defensaObjetivo).max(1)
 		objetivo.recibirDaño(danioReal)
 	}
+}
+
+// Especializaciones que delegan el tipo de daño y concentran la lógica en HabilidadAtaque
+class HabilidadAtaqueFisico inherits HabilidadAtaque {
+	override method tipoDanio() = "fisico"
+}
+
+class HabilidadAtaqueMagico inherits HabilidadAtaque {
+	override method tipoDanio() = "magico"
 }
 
 class Item { 
@@ -179,4 +204,60 @@ class Pocion inherits Item {
 		personaje.vida((personaje.vida() + curacion).min(personaje.vidaMaxima())) 
 	} 
 	override method esPocion() = true
+}
+
+object generadorEnemigos {
+	method generarEnemigoSimple() = new EnemigoSimple()
+}
+
+class EnemigoSimple inherits Enemigo {
+	override method initialize() {
+		super()
+		nombre = "Goblin"
+		vida = 40
+		vidaMaxima = 40
+		mana = 0 
+		manaMaximo = 0 
+		ataqueFisico = 7
+		defensaFisica = 3
+		ataqueMagico = 0 
+		defensaMagica = 0 
+		velocidad = 5
+		expOtorgada = 20
+		monedasOtorgadas = 5
+		position = game.at(0, 0) 
+	}
+}
+
+object heroePrincipal inherits Personaje {
+	override method initialize() {
+		nombre = "Héroe"
+		vida = 100
+		vidaMaxima = 100
+		mana = 50
+		manaMaximo = 50
+		ataqueFisico = 10
+		defensaFisica = 5
+		ataqueMagico = 8
+		defensaMagica = 4
+		velocidad = 10
+		habilidades = [new HabilidadAtaqueFisico(nombre="Golpe Rápido", danio=8), new HabilidadAtaqueMagico(nombre="Bola de Fuego", danio=15, costoMana=10)]
+		inventario = [new Pocion(nombre="Poción Chica", curacion=30)]
+		
+		frame = 1
+		image = "player_idle_1.png"
+		self.animarIdle() 
+		
+		position = game.at(3, 4)
+		game.addVisual(self)
+	}
+
+	method mover(direccion) {
+	}
+	
+	method curarse() {
+		vida = vidaMaxima
+		mana = manaMaximo
+		game.say(self, "¡Me siento renovado!")
+	}
 }
