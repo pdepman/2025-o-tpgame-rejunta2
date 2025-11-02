@@ -12,9 +12,6 @@ program mainExample {
   game.cellSize(48)
 
   mundo.iniciar() 
-  
-  keyboard.any().onPressDo { tecla =>
-    mundo.procesarTeclaGlobal(tecla)}
 
   game.start()
 }

@@ -71,25 +71,24 @@ object mundo {
  	var areaActual = puebloDelRey
  	var estadoActualControl = inicio 
  	var estadoAnteriorAPausa = null 
-
+	var property esPausa = pausa
+	
  	method heroe() = heroe
  	method areaActual() = areaActual 
 
  	method iniciar() {
 		self.cambiarEstadoControl(inicio)
-		
  	}
 
  	method cambiarEstadoControl(nuevoEstado) {
- 		console.println("Iniciando cambio de estado a: " + nuevoEstado.toString())
 		if (estadoActualControl != null) {
  			estadoActualControl.onExit() 
  		}
- 		if (nuevoEstado === pausa) {
+ 		if (nuevoEstado == esPausa) {
  		    estadoAnteriorAPausa = estadoActualControl
  		}
- 		else {estadoActualControl = nuevoEstado
- 		estadoActualControl.onEnter() }
+ 		estadoActualControl = nuevoEstado
+ 		estadoActualControl.onEnter()
  	}
  	method procesarTeclaGlobal(tecla) {
  	    estadoActualControl.procesarTecla(tecla)
@@ -141,7 +140,6 @@ class Portal {
 	method position() = position
 	method position(nuevaPosicion) { position = nuevaPosicion }
 	method destino() = destino
-	method condicion() = condicion
 	
 	method image() = "portal.png"
 	
