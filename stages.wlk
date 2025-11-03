@@ -95,30 +95,28 @@ object mundo {
 	// Pantalla de inicio simple: Enter para empezar
 	method mostrarPantallaInicio() {
 		estadoJuego = "inicio"
-		keyboard.any().clearListeners()
 		game.clear()
 		game.title("RPG por turnos - Presioná Enter para comenzar")
 		fondoInicio = new Decoracion(image="inicio_bg.png", position=game.origin())
 		game.addVisual(fondoInicio)
-		keyboard.enter().onPressDo({ => self.empezarExploracion() })
+		keyboard.enter().onPressDo({ => if (estadoJuego == "inicio") self.empezarExploracion() })
 	}
 
 	method empezarExploracion() {
 		// Pasamos a exploración, cargamos el área por defecto y seteamos teclas
 		estadoJuego = "explorando"
-		keyboard.any().clearListeners()
 		game.clear()
 		// Usar cambiarArea para centralizar la lógica de carga de áreas
 		self.cambiarArea(areaActual)
 	}
 	method configurarTeclasExploracion() { 
-    keyboard.w().onPressDo({ => self.moverHeroe(0, 1) })
-    keyboard.s().onPressDo({ => self.moverHeroe(0, -1) })
-    keyboard.a().onPressDo({ => self.moverHeroe(-1, 0) })
-	keyboard.d().onPressDo({ => self.moverHeroe(1, 0) }) 
+	keyboard.w().onPressDo({ => if (estadoJuego == "explorando") self.moverHeroe(0, 1) })
+	keyboard.s().onPressDo({ => if (estadoJuego == "explorando") self.moverHeroe(0, -1) })
+	keyboard.a().onPressDo({ => if (estadoJuego == "explorando") self.moverHeroe(-1, 0) })
+	keyboard.d().onPressDo({ => if (estadoJuego == "explorando") self.moverHeroe(1, 0) }) 
 
 		// iniciar combate manual en el bosque al tocar la e
-	keyboard.e().onPressDo({ =>
+	keyboard.e().onPressDo({ => if (estadoJuego == "explorando") {
 					// Debug: mostrar que se pulsó E y el contexto (área + estado)
 			game.title("E pulsada en area=" + areaActual.background() + " estado=" + estadoJuego)
 			game.say(heroe, "E pulsada: comprobando inicio de combate")
@@ -178,12 +176,11 @@ object mundo {
 	method pausarJuego() {
 		if (estadoJuego == "explorando") {
 			estadoJuego = "pausa"
-			keyboard.any().clearListeners()
 			game.title("Pausa - Presioná P para reanudar")
 			overlayPausa = new Decoracion(image="textbox.png", position=game.at(5, 3))
 			game.addVisual(overlayPausa)
 			game.say(overlayPausa, "Juego en pausa\nP para continuar")
-			keyboard.p().onPressDo({ => self.reanudarJuego() })
+			keyboard.p().onPressDo({ => if (estadoJuego == "pausa") self.reanudarJuego() })
 		}
 	}
 

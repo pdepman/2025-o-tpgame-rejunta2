@@ -40,6 +40,7 @@ class Combate {
 	var heroe = null
 	var enemigo = null
 	var turno = null
+	var escuchandoInputHeroe = false
 
 	method iniciarCombate(unHeroe, unEnemigo) {
 		heroe = unHeroe
@@ -58,20 +59,14 @@ class Combate {
 
 	method mostrarMenuHeroe() {
 		game.title("Elige: F/G/H/J = Ataques | 3 = Poción | 4 = Huir")
-		// Limpiamos listeners previos por si quedaron registrados
-		keyboard.any().clearListeners()
-		keyboard.f().clearListeners()
-		keyboard.g().clearListeners()
-		keyboard.h().clearListeners()
-		keyboard.j().clearListeners()
+		// En esta versión del engine no existe clearListeners().
+		// Usamos una bandera para aceptar un único input por turno.
+		escuchandoInputHeroe = true
 
 		keyboard.f().onPressDo({ =>
 			// Slot 1 (primer ataque)
-			keyboard.f().clearListeners()
-			keyboard.g().clearListeners()
-			keyboard.h().clearListeners()
-			keyboard.j().clearListeners()
-			keyboard.any().clearListeners()
+			if (!(mundo.estadoJuego() == "combate" and turno == heroe and escuchandoInputHeroe)) return
+			escuchandoInputHeroe = false
 			const hab = heroe.habilidades().take(1).last()
 			if (hab != null) {
 				heroe.usarHabilidad(hab, enemigo)
@@ -80,16 +75,14 @@ class Combate {
 				game.schedule(1500, { => self.siguienteTurno() })
 			} else {
 				game.say(heroe, "No conozco ese ataque")
+				escuchandoInputHeroe = true
 			}
 		})
 
 		keyboard.g().onPressDo({ =>
 			// Slot 2 (segundo ataque)
-			keyboard.f().clearListeners()
-			keyboard.g().clearListeners()
-			keyboard.h().clearListeners()
-			keyboard.j().clearListeners()
-			keyboard.any().clearListeners()
+			if (!(mundo.estadoJuego() == "combate" and turno == heroe and escuchandoInputHeroe)) return
+			escuchandoInputHeroe = false
 			const hab = heroe.habilidades().take(2).last()
 			if (hab != null) {
 				heroe.usarHabilidad(hab, enemigo)
@@ -98,16 +91,14 @@ class Combate {
 				game.schedule(1500, { => self.siguienteTurno() })
 			} else {
 				game.say(heroe, "No conozco ese ataque")
+				escuchandoInputHeroe = true
 			}
 		})
 
 		keyboard.h().onPressDo({ =>
 			// Slot 3 (tercer ataque, si existe)
-			keyboard.f().clearListeners()
-			keyboard.g().clearListeners()
-			keyboard.h().clearListeners()
-			keyboard.j().clearListeners()
-			keyboard.any().clearListeners()
+			if (!(mundo.estadoJuego() == "combate" and turno == heroe and escuchandoInputHeroe)) return
+			escuchandoInputHeroe = false
 			const hab = heroe.habilidades().take(3).last()
 			if (hab != null) {
 				heroe.usarHabilidad(hab, enemigo)
@@ -116,16 +107,14 @@ class Combate {
 				game.schedule(1500, { => self.siguienteTurno() })
 			} else {
 				game.say(heroe, "No conozco ese ataque")
+				escuchandoInputHeroe = true
 			}
 		})
 
 		keyboard.j().onPressDo({ =>
 			// Slot 4 (cuarto ataque, si existe)
-			keyboard.f().clearListeners()
-			keyboard.g().clearListeners()
-			keyboard.h().clearListeners()
-			keyboard.j().clearListeners()
-			keyboard.any().clearListeners()
+			if (!(mundo.estadoJuego() == "combate" and turno == heroe and escuchandoInputHeroe)) return
+			escuchandoInputHeroe = false
 			const hab = heroe.habilidades().take(4).last()
 			if (hab != null) {
 				heroe.usarHabilidad(hab, enemigo)
@@ -134,6 +123,7 @@ class Combate {
 				game.schedule(1500, { => self.siguienteTurno() })
 			} else {
 				game.say(heroe, "No conozco ese ataque")
+				escuchandoInputHeroe = true
 			}
 		})
 
@@ -142,7 +132,8 @@ class Combate {
 	}
 
 	method procesarAccionHeroe(tecla) {
-		keyboard.any().clearListeners()
+		if (!(mundo.estadoJuego() == "combate" and turno == heroe and escuchandoInputHeroe)) return
+		escuchandoInputHeroe = false
 		// Tabla de delegación: cada entrada mapea una tecla a una función que realiza la acción.
 		const acciones = [
 			[ '1', { => 
