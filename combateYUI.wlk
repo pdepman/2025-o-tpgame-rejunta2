@@ -25,8 +25,8 @@ object uiCombate {
 	}
 	
 	method actualizarUI(heroe, enemigo) {
-		game.say(uiHeroe, heroe.nombre() + " | Vida: " + heroe.vida() + "/" + heroe.vidaMaxima())
-		game.say(uiEnemigo, enemigo.nombre() + " | Vida: " + enemigo.vida() + "/" + enemigo.vidaMaxima())
+		game.say(uiHeroe, heroe.nombre() + " | Vida: " + heroe.vida() + "/" + heroe.vidaMaxima() + " | Maná: " + heroe.mana() + "/" + heroe.manaMaximo())
+		game.say(uiEnemigo, enemigo.nombre() + " | Vida: " + enemigo.vida() + "/" + enemigo.vidaMaxima() + " | Maná: " + enemigo.mana() + "/" + enemigo.manaMaximo())
 	}
 	
 	method limpiarPantalla() { 

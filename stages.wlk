@@ -79,17 +79,38 @@ object salaDelBoss inherits Stage {
 object mundo {
 	const heroe = new Personaje(position = game.center())
 	var areaActual = puebloDelRey
-	var estadoJuego = "explorando"
+	var estadoJuego = "inicio" // valores posibles: inicio | explorando | combate | pausa
 	var combateActual = null
+	var overlayPausa = null
+	var fondoInicio = null
 
 	method heroe() = heroe
 	method iniciar() { 
-		// Usar cambiarArea para centralizar la lógica de carga de áreas
-		self.cambiarArea(areaActual)
-		self.configurarTeclasExploracion()
+		// Mostrar pantalla de inicio antes de comenzar a explorar
+		self.mostrarPantallaInicio()
 	}
 	method estadoJuego() = estadoJuego
 	method combateActual() = combateActual
+
+	// Pantalla de inicio simple: Enter para empezar
+	method mostrarPantallaInicio() {
+		estadoJuego = "inicio"
+		keyboard.any().clearListeners()
+		game.clear()
+		game.title("RPG por turnos - Presioná Enter para comenzar")
+		fondoInicio = new Decoracion(image="inicio_bg.png", position=game.origin())
+		game.addVisual(fondoInicio)
+		keyboard.enter().onPressDo({ => self.empezarExploracion() })
+	}
+
+	method empezarExploracion() {
+		// Pasamos a exploración, cargamos el área por defecto y seteamos teclas
+		estadoJuego = "explorando"
+		keyboard.any().clearListeners()
+		game.clear()
+		// Usar cambiarArea para centralizar la lógica de carga de áreas
+		self.cambiarArea(areaActual)
+	}
 	method configurarTeclasExploracion() { 
     keyboard.w().onPressDo({ => self.moverHeroe(0, 1) })
     keyboard.s().onPressDo({ => self.moverHeroe(0, -1) })
@@ -114,9 +135,12 @@ object mundo {
 					self.cambiarACombate(enemigo)
 					}
 				})
+
+		// Pausa en exploración con tecla P
+	keyboard.p().onPressDo({ => self.pausarJuego() })
   }
 	method moverHeroe(dx, dy) { 
-    if (estadoJuego == "explorando") { 
+	if (estadoJuego == "explorando") { 
       heroe.position(heroe.position().right(dx).up(dy))
       areaActual.alMoverse() 
       } 
@@ -146,17 +170,40 @@ object mundo {
 	game.addVisualCharacter(heroe)
 	// Registrar colisión para portales/visuals del área cargada
 	game.whenCollideDo(heroe, { otro => otro.fueTocadoPor(heroe) })
+	self.configurarTeclasExploracion()
 			combateActual = null
   }
+
+	// --- Pausa simple (solo desde exploración) ---
+	method pausarJuego() {
+		if (estadoJuego == "explorando") {
+			estadoJuego = "pausa"
+			keyboard.any().clearListeners()
+			game.title("Pausa - Presioná P para reanudar")
+			overlayPausa = new Decoracion(image="textbox.png", position=game.at(5, 3))
+			game.addVisual(overlayPausa)
+			game.say(overlayPausa, "Juego en pausa\nP para continuar")
+			keyboard.p().onPressDo({ => self.reanudarJuego() })
+		}
+	}
+
+	method reanudarJuego() {
+		if (estadoJuego == "pausa") {
+			estadoJuego = "explorando"
+			// remover overlay si existe
+			if (overlayPausa != null) { game.removeVisual(overlayPausa); overlayPausa = null }
+			self.configurarTeclasExploracion()
+			game.title("Explorando - " + areaActual.background())
+		}
+	}
 }
 
 class Portal {
-	var position
-	var destino
-	var condicion = { heroeParam => true }
+	const position
+	const destino
+	const condicion = { heroeParam => true }
 
 	method position() = position
-	method position(nuevaPosicion) { position = nuevaPosicion }
 	method destino() = destino
 	method condicion() = condicion
 	
@@ -172,8 +219,8 @@ class Portal {
 }
 
 class Decoracion {
-	var image
-	var position
+	const image
+	const position
 
 	method image() = image
 	method position() = position
