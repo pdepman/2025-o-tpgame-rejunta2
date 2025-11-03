@@ -132,7 +132,7 @@ object mundo {
 					game.say(heroe, "Iniciando combate con " + enemigo.nombre())
 					self.cambiarACombate(enemigo)
 					}
-				})
+				}})		
 
 		// Pausa en exploración con tecla P
 	keyboard.p().onPressDo({ => self.pausarJuego() })
@@ -159,6 +159,7 @@ object mundo {
 	method cambiarACombate(enemigo) { 
 		estadoJuego = "combate" 
 		combateActual = new Combate()
+		self.desactivarMovimientoEnTeclado()
 		combateActual.iniciarCombate(heroe, enemigo) 
   }
 	method volverAExploracion() { 
@@ -171,6 +172,16 @@ object mundo {
 	self.configurarTeclasExploracion()
 			combateActual = null
   }
+
+	method desactivarMovimientoEnTeclado() {
+		// Overwrite de WASD para que no muevan nada en combate
+		keyboard.w().onPressDo({ => self.noop() })
+		keyboard.a().onPressDo({ => self.noop() })
+		keyboard.s().onPressDo({ => self.noop() })
+		keyboard.d().onPressDo({ => self.noop() })
+	}
+
+	method noop() {}
 
 	// --- Pausa simple (solo desde exploración) ---
 	method pausarJuego() {

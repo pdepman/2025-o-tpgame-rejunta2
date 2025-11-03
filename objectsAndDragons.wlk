@@ -28,6 +28,8 @@ class Luchador {
 	method mana() = mana
 	method mana(nuevoMana) { mana = nuevoMana }
 
+	method manaMaximo() = manaMaximo
+
 	method ataqueFisico() = ataqueFisico
 	method ataqueMagico() = ataqueMagico
 	method defensaFisica() = defensaFisica
@@ -133,6 +135,10 @@ class Enemigo inherits Luchador {
 	override method alMorir() { 
 		mundo.combateActual().terminarCombate(self) 
   }
+
+	// Delegación para obtener valores según tipo de daño (igual que Personaje)
+	method defensaPara(tipo) = if (tipo == "fisico") self.defensaFisica() else self.defensaMagica()
+	method ataquePara(tipo) = if (tipo == "fisico") self.ataqueFisico() else self.ataqueMagico()
 }
 
 class Habilidad {
