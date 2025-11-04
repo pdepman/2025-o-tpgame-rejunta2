@@ -89,7 +89,7 @@ class Personaje inherits Luchador {
 		inventario = [new Pocion(nombre="Poción de Vida Pequeña", curacion=30)]
 	}
 
-	method image() = "player.jpg"
+	method image() = "player.png"
 	override method alMorir() { 
 		game.say(self, "He sido derrotado...")
 		game.schedule(2000, { => game.stop() })
@@ -133,7 +133,7 @@ class Enemigo inherits Luchador {
 		super()
 		habilidades = [new HabilidadAtaqueFisico(nombre="Ataque Básico", danio=5)]
 	}
-	method image() = "enemigo.jpg"
+	method image() = "enemigo.png"
 	override method alMorir() { 
 		mundo.combateActual().terminarCombate(self) 
   }
