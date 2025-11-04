@@ -54,7 +54,7 @@ class Luchador {
 	method alMorir() { /* A DEFINIR MAS ADELANTE */ }
 	
 	method usarHabilidad(habilidad, oponente) {
-		// Delegamos la validación y aplicación de la habilidad a la propia habilidad
+		// La habilidad maneja toda su lógica internamente
 		habilidad.aplicarPor(self, oponente)
 	}
 }
@@ -84,7 +84,8 @@ class Personaje inherits Luchador {
 		velocidad = 10
 			habilidades = [
 				new HabilidadAtaqueFisico(nombre="Golpe Rápido", danio=8),
-				new HabilidadAtaqueMagico(nombre="Bola de Fuego", danio=15, costoMana=10)
+				new HabilidadAtaqueMagico(nombre="Bola de Fuego", danio=15, costoMana=10),
+				new HabilidadCuracion(nombre="Curación Menor", curacion=25, costoMana=8)
 			]
 		inventario = [new Pocion(nombre="Poción de Vida Pequeña", curacion=30)]
 	}
@@ -117,10 +118,6 @@ class Personaje inherits Luchador {
 		inventario.take(1).forEach({ it => it.usar(self); inventario.remove(it) })
   }
 	method tieneAccesoASalaBoss() = nivel >= 3
-
-	// Delegación para obtener valores según tipo de daño
-	method defensaPara(tipo) = if (tipo == "fisico") self.defensaFisica() else self.defensaMagica()
-	method ataquePara(tipo) = if (tipo == "fisico") self.ataqueFisico() else self.ataqueMagico()
 }
 
 class Enemigo inherits Luchador {
@@ -144,19 +141,16 @@ class Enemigo inherits Luchador {
 	override method alMorir() { 
 		mundo.combateActual().terminarCombate(self) 
   }
-
-	// Delegación para obtener valores según tipo de daño (igual que Personaje)
-	method defensaPara(tipo) = if (tipo == "fisico") self.defensaFisica() else self.defensaMagica()
-	method ataquePara(tipo) = if (tipo == "fisico") self.ataqueFisico() else self.ataqueMagico()
 }
 
 class FinalBoss inherits Enemigo {
 	override method initialize() {
 		super()
-		// El boss tiene habilidades más poderosas
+		// El boss tiene habilidades más poderosas y variadas
 		habilidades = [
 			new HabilidadAtaqueFisico(nombre="Golpe Devastador", danio=20),
-			new HabilidadAtaqueMagico(nombre="Ráfaga Mortal", danio=25, costoMana=15)
+			new HabilidadAtaqueMagico(nombre="Ráfaga Mortal", danio=25, costoMana=15),
+			new HabilidadCuracion(nombre="Regeneración", curacion=30, costoMana=12)
 		]
 	}
 	
@@ -184,39 +178,77 @@ class Habilidad {
 	method nombre() = nombre
 	method costoMana() = costoMana
 
-	// La habilidad se encarga de validar recursos y aplicarse.
+	// La habilidad se encarga de validar recursos y aplicarse completamente
 	method aplicarPor(lanzador, objetivo) {
-		// delegamos la verificación de recursos a la habilidad
 		if (lanzador.mana() >= self.costoMana()) {
 			lanzador.mana(lanzador.mana() - self.costoMana())
-			self.usarEn(objetivo, lanzador)
+			self.ejecutarEfecto(lanzador, objetivo)
 		} else {
 			game.say(lanzador, "¡No tengo suficiente maná!")
 		}
 	}
 
-	method usarEn(objetivo, lanzador) {}
+	// Método abstracto que cada habilidad implementa
+	method ejecutarEfecto(lanzador, objetivo) {}
+	
+	// Método que cada habilidad puede redefinir para su tipo de daño
+	method esFisica() = true
 }
 
-class HabilidadAtaque inherits Habilidad {
+class HabilidadAtaqueFisico inherits Habilidad {
 	var danio
-	// El tipo de daño lo delegan las subclases vía método
-	method tipoDanio() = "fisico"
-	override method usarEn(objetivo, lanzador) {
-		const defensaObjetivo = objetivo.defensaPara(self.tipoDanio())
-		const ataqueLanzador = lanzador.ataquePara(self.tipoDanio())
+	
+	override method esFisica() = true
+	
+	override method ejecutarEfecto(lanzador, objetivo) {
+		const defensaObjetivo = objetivo.defensaFisica()
+		const ataqueLanzador = lanzador.ataqueFisico()
 		const danioReal = (ataqueLanzador + danio - defensaObjetivo).max(1)
 		objetivo.recibirDaño(danioReal)
 	}
 }
 
-// Especializaciones que delegan el tipo de daño y concentran la lógica en HabilidadAtaque
-class HabilidadAtaqueFisico inherits HabilidadAtaque {
-	override method tipoDanio() = "fisico"
+class HabilidadAtaqueMagico inherits Habilidad {
+	var danio
+	
+	override method esFisica() = false
+	
+	override method ejecutarEfecto(lanzador, objetivo) {
+		const defensaObjetivo = objetivo.defensaMagica()
+		const ataqueLanzador = lanzador.ataqueMagico()
+		const danioReal = (ataqueLanzador + danio - defensaObjetivo).max(1)
+		objetivo.recibirDaño(danioReal)
+	}
 }
 
-class HabilidadAtaqueMagico inherits HabilidadAtaque {
-	override method tipoDanio() = "magico"
+class HabilidadCuracion inherits Habilidad {
+	var curacion
+	
+	override method ejecutarEfecto(lanzador, objetivo) {
+		const vidaRecuperada = curacion
+		objetivo.vida((objetivo.vida() + vidaRecuperada).min(objetivo.vidaMaxima()))
+		game.say(objetivo, "¡Recuperé " + vidaRecuperada + " puntos de vida!")
+	}
+}
+
+class HabilidadEscudo inherits Habilidad {
+	var defensaExtra
+	var turnos
+	
+	override method ejecutarEfecto(lanzador, objetivo) {
+		// Esta sería una habilidad de buff (simplificada para el ejemplo)
+		game.say(objetivo, "¡Mi defensa aumentó temporalmente!")
+		// En una implementación completa, se podría agregar un sistema de efectos temporales
+	}
+}
+
+class HabilidadVelocidad inherits Habilidad {
+	var velocidadExtra
+	
+	override method ejecutarEfecto(lanzador, objetivo) {
+		game.say(objetivo, "¡Me siento más rápido!")
+		// Ejemplo de habilidad que podría aumentar la velocidad temporalmente
+	}
 }
 
 class Item { 
