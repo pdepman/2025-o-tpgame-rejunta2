@@ -54,7 +54,7 @@ object puebloDelRey inherits Stage {
 		visuals.add(portalBoss)
 	}
 
-	override method background() = "pueblo.png"
+	override method background() = "pueblof.png"
 	// descargar y alMoverse heredan de Stage
 }
 
@@ -64,7 +64,7 @@ object salaDelBoss inherits Stage {
 		// const fondo = new Decoracion(image="sala_jefe.png", position=game.origin())
 		// game.addVisual(fondo)
 		// un único portal que devuelva al pueblo (ciudad)
-		const fondo = new Decoracion(image="pueblo.png", position=game.origin())
+		const fondo = new Decoracion(image="pueblof.png", position=game.origin())
 		game.addVisual(fondo)
 		visuals.add(fondo)
 		const portalPueblo = new Portal(position = game.at(0, 4), destino = puebloDelRey)
@@ -72,7 +72,7 @@ object salaDelBoss inherits Stage {
 		visuals.add(portalPueblo)
 	}
 
-	override method background() = "pueblo.png"
+	override method background() = "pueblof.png"
 	// descargar y alMoverse heredan de Stage
 }
 
