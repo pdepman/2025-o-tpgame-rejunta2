@@ -25,6 +25,8 @@ class Luchador {
 
 	method vidaMaxima() = vidaMaxima
 
+	method nivel() = nivel
+
 	method mana() = mana
 	method mana(nuevoMana) { mana = nuevoMana }
 

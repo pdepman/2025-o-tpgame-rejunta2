@@ -18,7 +18,7 @@ object uiCombate {
 		uiHeroe = new Decoracion(image="textbox.png", position=game.at(1, 1))
 		uiEnemigo = new Decoracion(image="textbox.png", position=game.at(9, 6))
 		uiMenu = new Decoracion(image="textbox.png", position=game.at(1, 7))
-		uiAccion = new Decoracion(image="textbox.png", position=game.at(6, 4))
+		uiAccion = new Decoracion(image=null, position=game.at(6, 4))
 		
 		game.addVisual(fondo)
 		game.addVisual(uiHeroe)
@@ -43,12 +43,12 @@ object uiCombate {
 
 	method actualizarEstadoHeroe(heroe) {
 		game.say(uiHeroe, "HEROE\nHP: " + heroe.vida() + "/" + heroe.vidaMaxima() + "\nMP: " + heroe.mana() + "/" + heroe.manaMaximo())
-		game.schedule(3000, { => if (mundo.estadoJuego() == "combate") self.actualizarEstadoHeroe(heroe) })
+		game.schedule(8000, { => if (mundo.estadoJuego() == "combate") self.actualizarEstadoHeroe(heroe) })
 	}
 
 	method actualizarEstadoEnemigo(enemigo) {
 		game.say(uiEnemigo, "ENEMIGO\nHP: " + enemigo.vida() + "/" + enemigo.vidaMaxima() + "\nMP: " + enemigo.mana() + "/" + enemigo.manaMaximo())
-		game.schedule(3000, { => if (mundo.estadoJuego() == "combate") self.actualizarEstadoEnemigo(enemigo) })
+		game.schedule(8000, { => if (mundo.estadoJuego() == "combate") self.actualizarEstadoEnemigo(enemigo) })
 	}
 
 	method mostrarAccion(texto) {
@@ -74,7 +74,7 @@ object uiCombate {
 	method refrescarMenu() {
 		if (opcionesActivas) {
 			game.say(uiMenu, menuTexto)
-			game.schedule(3500, { => if (opcionesActivas and mundo.estadoJuego() == "combate") self.refrescarMenu() })
+			game.schedule(8500, { => if (opcionesActivas and mundo.estadoJuego() == "combate") self.refrescarMenu() })
 		}
 	}
 }
@@ -193,7 +193,13 @@ class Combate {
 		const n2 = (if (habs.size() >= 2) habs.take(2).last().nombre() else "-")
 		const n3 = (if (habs.size() >= 3) habs.take(3).last().nombre() else "-")
 		const n4 = (if (habs.size() >= 4) habs.take(4).last().nombre() else "-")
-		const textoMenu = "F=" + n1 + " G=" + n2 + " H=" + n3 + " J=" + n4 + "\n3=Poción 4=Huir X=Huir"
+		// Formato multi-línea para evitar que el texto se salga de la burbuja
+		const textoMenu =
+			"F: " + n1 +
+			"\nG: " + n2 +
+			"\nH: " + n3 +
+			"\nJ: " + n4 +
+			"\n\n3=Poción   4=Huir"
 		uiCombate.mostrarOpcionesCon(textoMenu)
 		uiCombate.mostrarAccion("Esperando tu acción...")
 	}

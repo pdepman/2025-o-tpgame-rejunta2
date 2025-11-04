@@ -83,6 +83,7 @@ object mundo {
 	var combateActual = null
 	var overlayPausa = null
 	var fondoInicio = null
+	var panelStatus = null
 
 	method heroe() = heroe
 	method iniciar() { 
@@ -136,6 +137,9 @@ object mundo {
 
 		// Pausa en exploración con tecla P
 	keyboard.p().onPressDo({ => self.pausarJuego() })
+
+	// Pantalla de status con tecla I (sólo en el pueblo)
+keyboard.i().onPressDo({ => self.toggleStatus() })
   }
 	method moverHeroe(dx, dy) { 
 	if (estadoJuego == "explorando") { 
@@ -143,6 +147,60 @@ object mundo {
       areaActual.alMoverse() 
       } 
   }
+		// ---- Pantalla de Status (sólo pueblo) ----
+		method toggleStatus() {
+			if (estadoJuego == "status") {
+				self.cerrarStatus()
+			} else {
+				if (estadoJuego == "explorando" and areaActual.background() == puebloDelRey.background()) {
+					self.mostrarStatus()
+				}
+			}
+		}
+
+		method mostrarStatus() {
+			estadoJuego = "status"
+			game.title("Status del Héroe - Presioná I para volver")
+			// Crear panel y mostrar stats
+			panelStatus = new Decoracion(image="textbox.png", position=game.at(2, 1))
+			game.addVisual(panelStatus)
+
+			var texto = "=== STATUS ===" +
+				"\nNombre: " + heroe.nombre() +
+				"\nNivel: " + heroe.nivel() +
+				"\nHP: " + heroe.vida() + "/" + heroe.vidaMaxima() +
+				"\nMP: " + heroe.mana() + "/" + heroe.manaMaximo() +
+				"\nFísico: ATK=" + heroe.ataqueFisico() + " DEF=" + heroe.defensaFisica() +
+				"\nMágico: ATK=" + heroe.ataqueMagico() + " DEF=" + heroe.defensaMagica() +
+				"\nVelocidad: " + heroe.velocidad() +
+				"\nEXP: " + heroe.exp() + "/" + heroe.expSiguienteNivel()
+
+			// Listar habilidades con costo de MP (dos líneas por habilidad para acotar el ancho)
+			texto = texto + "\n\nHabilidades:"
+			heroe.habilidades().forEach({ h =>
+				texto = texto + "\n- " + h.nombre() + "\n   MP: " + h.costoMana()
+			})
+
+			// Listar inventario
+			texto = texto + "\n\nInventario:"
+			if (heroe.inventario().size() == 0) {
+				texto = texto + "\n- (vacío)"
+			} else {
+				heroe.inventario().forEach({ it =>
+					texto = texto + "\n- " + it.nombre()
+				})
+			}
+
+			game.say(panelStatus, texto)
+		}
+
+		method cerrarStatus() {
+			// Remover panel y volver a exploración
+			if (panelStatus != null) { game.removeVisual(panelStatus); panelStatus = null }
+			estadoJuego = "explorando"
+			game.title("Explorando - " + areaActual.background())
+		}
+
 	method cambiarArea(nueva) { 
 	// Primero descargamos el área actual para remover sus visuales
 	areaActual.descargar()
