@@ -45,7 +45,7 @@ object puebloDelRey inherits Stage {
 		game.title("Pueblo del Rey")
 		const portalBosque = new Portal(position = game.at(0, 4), destino = bosqueDeMonstruos)
 		const portalBoss = new Portal(position = game.at(15, 4), destino = salaDelBoss, condicion = { areaHeroe => areaHeroe.tieneAccesoASalaBoss() })
-		const fondo = new Decoracion(image="pueblo.png", position=game.origin())
+		const fondo = new Decoracion(image="pueblof.png", position=game.origin())
 		game.addVisual(fondo)
 		visuals.add(fondo)
 		game.addVisual(portalBosque)
