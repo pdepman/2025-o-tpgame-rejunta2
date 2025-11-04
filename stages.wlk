@@ -84,6 +84,7 @@ object mundo {
 	var overlayPausa = null
 	var fondoInicio = null
 	var panelStatus = null
+	var anchorStatus = null
 
 	method heroe() = heroe
 	method iniciar() { 
@@ -132,6 +133,8 @@ object mundo {
 						// Mostrar un mensaje corto antes de cambiar de pantalla
 					game.say(heroe, "Iniciando combate con " + enemigo.nombre())
 					self.cambiarACombate(enemigo)
+					} else {
+					game.say(heroe, "Aquí no puedo iniciar un combate.")
 					}
 				}})		
 
@@ -162,8 +165,11 @@ keyboard.i().onPressDo({ => self.toggleStatus() })
 			estadoJuego = "status"
 			game.title("Status del Héroe - Presioná I para volver")
 			// Crear panel y mostrar stats
-			panelStatus = new Decoracion(image="textbox.png", position=game.at(2, 1))
+			panelStatus = new Decoracion(image="papirostats.png", position=game.at(2, 1))
 			game.addVisual(panelStatus)
+			// Ancla invisible para centrar la burbuja por encima del papiro
+			anchorStatus = new Decoracion(image=null, position=game.at(3, 3))
+			game.addVisual(anchorStatus)
 
 			var texto = "=== STATUS ===" +
 				"\nNombre: " + heroe.nombre() +
@@ -191,11 +197,13 @@ keyboard.i().onPressDo({ => self.toggleStatus() })
 				})
 			}
 
-			game.say(panelStatus, texto)
+			// Mostramos el texto sobre el ancla para que quede centrado y por encima del papiro
+			game.say(anchorStatus, texto)
 		}
 
 		method cerrarStatus() {
 			// Remover panel y volver a exploración
+			if (anchorStatus != null) { game.removeVisual(anchorStatus); anchorStatus = null }
 			if (panelStatus != null) { game.removeVisual(panelStatus); panelStatus = null }
 			estadoJuego = "explorando"
 			game.title("Explorando - " + areaActual.background())
