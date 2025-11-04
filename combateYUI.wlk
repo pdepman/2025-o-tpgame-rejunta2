@@ -15,9 +15,9 @@ object uiCombate {
 		const fondo = new Decoracion(image="battle_bg.png", position=game.origin())
 		
 		// Paneles de estado: separados verticalmente para evitar superposición
-		uiHeroe = new Decoracion(image="textbox.png", position=game.at(1, 1))
-		uiEnemigo = new Decoracion(image="textbox.png", position=game.at(9, 6))
-		uiMenu = new Decoracion(image="textbox.png", position=game.at(1, 7))
+		uiHeroe = new Decoracion(image=null, position=game.at(3, 1))
+		uiEnemigo = new Decoracion(image=null, position=game.at(8, 6))
+		uiMenu = new Decoracion(image=null, position=game.at(2, 7))
 		uiAccion = new Decoracion(image=null, position=game.at(6, 4))
 		
 		game.addVisual(fondo)
@@ -27,7 +27,7 @@ object uiCombate {
 		game.addVisual(uiAccion)
 		
 		heroe.position(game.at(3, 2))
-		enemigo.position(game.at(12, 5))
+		enemigo.position(game.at(11, 5))
 		game.addVisualCharacter(heroe)
 		game.addVisualCharacter(enemigo)
 		
@@ -68,6 +68,9 @@ object uiCombate {
 	method mostrarOpcionesCon(texto) {
 		menuTexto = texto
 		opcionesActivas = true
+		// Mostrar inmediatamente el texto del menú
+		game.say(uiMenu, menuTexto)
+		// Y luego programar el refresco
 		self.refrescarMenu()
 	}
 

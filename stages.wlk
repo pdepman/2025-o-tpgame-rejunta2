@@ -59,21 +59,51 @@ object puebloDelRey inherits Stage {
 }
 
 object salaDelBoss inherits Stage {
+	var boss = null
+	
 	override method cargar() { 
 		game.title("Sala del Jefe Final")
-		// const fondo = new Decoracion(image="sala_jefe.png", position=game.origin())
-		// game.addVisual(fondo)
-		// un único portal que devuelva al pueblo (ciudad)
-		const fondo = new Decoracion(image="pueblof.png", position=game.origin())
+		const fondo = new Decoracion(image="boss.png", position=game.origin())
 		game.addVisual(fondo)
 		visuals.add(fondo)
+		
+		// Crear el boss estático en el centro de la sala solo si no ha sido derrotado
+		if (boss == null or boss.estaVivo()) {
+			boss = new FinalBoss(
+				nombre="Parcial de objetos", 
+				vida=200, 
+				vidaMaxima=200, 
+				mana=100, 
+				manaMaximo=100, 
+				ataqueFisico=25, 
+				defensaFisica=15, 
+				ataqueMagico=30, 
+				defensaMagica=20, 
+				velocidad=12, 
+				expOtorgada=500, 
+				monedasOtorgadas=100, 
+				position=game.at(8, 4),
+				imagen="enemigo.png"
+			)
+			game.addVisual(boss) // Usar addVisual en lugar de addVisualCharacter
+			visuals.add(boss)
+		}
+		
+		// Portal de salida al pueblo
 		const portalPueblo = new Portal(position = game.at(0, 4), destino = puebloDelRey)
 		game.addVisual(portalPueblo)
 		visuals.add(portalPueblo)
 	}
+	
+	method removerBoss() {
+		if (boss != null) {
+			game.removeVisual(boss)
+			visuals.remove(boss)
+			boss.vida(0) // Marcar como muerto para que no reaparezca
+		}
+	}
 
-	override method background() = "pueblof.png"
-	// descargar y alMoverse heredan de Stage
+	override method background() = "boss.png"
 }
 
 object mundo {
@@ -125,8 +155,8 @@ object mundo {
 			if (areaActual.background() == bosqueDeMonstruos.background() and estadoJuego == "explorando") {
 						// Generar enemigo aleatorio simple
 				const listaEnemigos = [
-					new Enemigo(nombre="Lobo Salvaje", vida=40, vidaMaxima=40, mana=10, manaMaximo=10, ataqueFisico=8, defensaFisica=3, ataqueMagico=0, defensaMagica=1, velocidad=8, expOtorgada=30, monedasOtorgadas=10, position=game.center()),
-					new Enemigo(nombre="Araña Gigante", vida=30, vidaMaxima=30, mana=5, manaMaximo=5, ataqueFisico=6, defensaFisica=2, ataqueMagico=0, defensaMagica=1, velocidad=8, expOtorgada=20, monedasOtorgadas=5, position=game.center())
+					new Enemigo(nombre="Lobo Salvaje", vida=40, vidaMaxima=40, mana=10, manaMaximo=10, ataqueFisico=8, defensaFisica=3, ataqueMagico=0, defensaMagica=1, velocidad=8, expOtorgada=30, monedasOtorgadas=10, position=game.center(), imagen="lobo.png"),
+					new Enemigo(nombre="Araña Gigante", vida=30, vidaMaxima=30, mana=5, manaMaximo=5, ataqueFisico=6, defensaFisica=2, ataqueMagico=0, defensaMagica=1, velocidad=8, expOtorgada=20, monedasOtorgadas=5, position=game.center(), imagen="araña.png")
 					]
 					const enemigo = listaEnemigos.anyOne()
 					game.title("Iniciando combate contra " + enemigo.nombre())
@@ -217,7 +247,14 @@ keyboard.i().onPressDo({ => self.toggleStatus() })
 	game.clear()
 	areaActual.cargar()
 	game.addVisualCharacter(heroe)
-	heroe.position(game.center())
+	
+	// Posicionar héroe según el área
+	if (nueva == salaDelBoss) {
+		heroe.position(game.at(2, 2)) // Esquina inferior izquierda para la sala del boss
+	} else {
+		heroe.position(game.center()) // Centro para otras áreas
+	}
+	
 	self.configurarTeclasExploracion()
 	// Registrar colisión para portales/visuals del área cargada
 	game.whenCollideDo(heroe, { otro => otro.fueTocadoPor(heroe) })

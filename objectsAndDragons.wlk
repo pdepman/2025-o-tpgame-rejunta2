@@ -126,6 +126,7 @@ class Personaje inherits Luchador {
 class Enemigo inherits Luchador {
 	var expOtorgada
 	var monedasOtorgadas
+	var imagen
 
 	method expOtorgada() = expOtorgada
 	method monedasOtorgadas() = monedasOtorgadas
@@ -133,7 +134,13 @@ class Enemigo inherits Luchador {
 		super()
 		habilidades = [new HabilidadAtaqueFisico(nombre="Ataque Básico", danio=5)]
 	}
-	method image() = "enemigo.png"
+	// Permite especificar una imagen por instancia (campo `imagen`) o elegir
+	// una por defecto según el nombre del enemigo.
+	method image() =
+		if (imagen != null) imagen
+		else if (nombre == "Lobo Salvaje") "lobo.png"
+		else if (nombre == "Araña Gigante") "araña.png"
+		else "enemigo.png"
 	override method alMorir() { 
 		mundo.combateActual().terminarCombate(self) 
   }
@@ -141,6 +148,33 @@ class Enemigo inherits Luchador {
 	// Delegación para obtener valores según tipo de daño (igual que Personaje)
 	method defensaPara(tipo) = if (tipo == "fisico") self.defensaFisica() else self.defensaMagica()
 	method ataquePara(tipo) = if (tipo == "fisico") self.ataqueFisico() else self.ataqueMagico()
+}
+
+class FinalBoss inherits Enemigo {
+	override method initialize() {
+		super()
+		// El boss tiene habilidades más poderosas
+		habilidades = [
+			new HabilidadAtaqueFisico(nombre="Golpe Devastador", danio=20),
+			new HabilidadAtaqueMagico(nombre="Ráfaga Mortal", danio=25, costoMana=15)
+		]
+	}
+	
+	// Método para que se pueda iniciar combate al "chocar" con el boss
+	method fueTocadoPor(jugador) {
+		game.say(self, "¡Enfréntate al Parcial de objetos!")
+		mundo.cambiarACombate(self)
+	}
+	
+	override method alMorir() {
+		salaDelBoss.removerBoss()
+		game.say(mundo.heroe(), "¡Has derrotado al Parcial de objetos!")
+		game.say(mundo.heroe(), "¡Felicitaciones! Has completado el juego!")
+		game.schedule(3000, { => 
+			game.say(mundo.heroe(), "Gracias por jugar!")
+			game.schedule(2000, { => game.stop() })
+		})
+	}
 }
 
 class Habilidad {
