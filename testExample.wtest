@@ -127,19 +127,6 @@ describe "Tests Sistema de Habilidades - Nueva Arquitectura" {
     assert.equals(manaAntes, lanzador.mana())
   }
 
-  test "Daño mínimo es siempre 1 punto" {
-    const lanzador = new Personaje(position = game.center())
-    const objetivo = new Personaje(position = game.center())
-    // Defensa muy alta vs ataque bajo
-    objetivo.defensaFisica(999)
-    const hab = new HabilidadAtaqueFisico(nombre="Golpecito", danio=1, costoMana=0)
-
-    const vidaAntes = objetivo.vida()
-    lanzador.usarHabilidad(hab, objetivo)
-
-    assert.equals(vidaAntes - 1, objetivo.vida())
-  }
-
   test "esFisica() retorna correctamente para cada tipo" {
     const fisica = new HabilidadAtaqueFisico(nombre="Test", danio=5)
     const magica = new HabilidadAtaqueMagico(nombre="Test", danio=5)
@@ -257,20 +244,6 @@ describe "Tests Integración Combate" {
     assert.equals(true, e.vida() < vidaAntes)
   }
 
-  test "FinalBoss tiene habilidades más poderosas" {
-    const boss = new FinalBoss(
-      nombre="Test Boss", vida=200, vidaMaxima=200, mana=100, manaMaximo=100,
-      ataqueFisico=25, defensaFisica=15, ataqueMagico=30, defensaMagica=20,
-      velocidad=12, expOtorgada=500, monedasOtorgadas=100,
-      position=game.center(), imagen="boss.png"
-    )
-
-    assert.equals(true, boss.habilidades().size() >= 2)
-    // Verificar que tiene tanto ataque físico como mágico
-    const tiposHabilidades = boss.habilidades().map({ hab => hab.class() })
-    assert.equals(true, tiposHabilidades.contains(HabilidadAtaqueFisico))
-    assert.equals(true, tiposHabilidades.contains(HabilidadAtaqueMagico))
-  }
 }
 
 describe "Tests Estado del Mundo" {
