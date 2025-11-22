@@ -69,7 +69,7 @@ describe "Tests Sistema de Habilidades - Nueva Arquitectura" {
     const hab = new HabilidadAtaqueFisico(nombre="Golpe Test", danio=10, costoMana=0)
     
     const vidaAntes = objetivo.vida()
-    lanzador.usarHabilidad(hab, objetivo)
+    lanzador.aplicarHabilidad(hab, objetivo)
     
     // Daño = ataqueFisico(10) + danio(10) - defensaFisica(5) = 15
     assert.equals(vidaAntes - 15, objetivo.vida())
@@ -82,7 +82,7 @@ describe "Tests Sistema de Habilidades - Nueva Arquitectura" {
     
     const vidaAntes = objetivo.vida()
     const manaAntes = lanzador.mana()
-    lanzador.usarHabilidad(hab, objetivo)
+    lanzador.aplicarHabilidad(hab, objetivo)
     
     // Daño = ataqueMagico(8) + danio(12) - defensaMagica(4) = 16
     assert.equals(vidaAntes - 16, objetivo.vida())
@@ -95,9 +95,8 @@ describe "Tests Sistema de Habilidades - Nueva Arquitectura" {
     objetivo.vida(30)
     const hab = new HabilidadCuracion(nombre="Curar Test", curacion=40, costoMana=10)
     
-    lanzador.usarHabilidad(hab, objetivo)
+    lanzador.aplicarHabilidad(hab, objetivo)
     
-    // 30 + 40 = 70, no excede vidaMaxima(100)
     assert.equals(70, objetivo.vida())
   }
 
@@ -107,9 +106,8 @@ describe "Tests Sistema de Habilidades - Nueva Arquitectura" {
     objetivo.vida(90)
     const hab = new HabilidadCuracion(nombre="Curar Test", curacion=40, costoMana=10)
     
-    lanzador.usarHabilidad(hab, objetivo)
+    lanzador.aplicarHabilidad(hab, objetivo)
     
-    // 90 + 40 = 130, pero se limita a vidaMaxima(100)
     assert.equals(100, objetivo.vida())
   }
 
@@ -121,7 +119,7 @@ describe "Tests Sistema de Habilidades - Nueva Arquitectura" {
 
     const vidaAntes = objetivo.vida()
     const manaAntes = lanzador.mana()
-    lanzador.usarHabilidad(hab, objetivo)
+    lanzador.aplicarHabilidad(hab, objetivo)
 
     assert.equals(vidaAntes, objetivo.vida())
     assert.equals(manaAntes, lanzador.mana())
@@ -239,11 +237,10 @@ describe "Tests Integración Combate" {
     )
 
     const vidaAntes = e.vida()
-    h.usarHabilidad(h.habilidades().first(), e)
+    h.aplicarHabilidad(h.habilidades().first(), e)
 
     assert.equals(true, e.vida() < vidaAntes)
   }
-
 }
 
 describe "Tests Estado del Mundo" {

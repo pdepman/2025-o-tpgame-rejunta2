@@ -37,7 +37,7 @@ object bosqueDeMonstruos inherits Stage {
 	// descargar y alMoverse heredan de Stage
 
 	override method alMoverse() {
-		// Antes los encuentros eran aleatorios al moverse; ahora los dejamos controlados por la tecla E (SIGUE SIN FUNCIONAR >.< )
+		// Antes los encuentros eran aleatorios al moverse, ahora la tecla E (SIGUE SIN FUNCIONAR >.< )
 	}
 }
 object puebloDelRey inherits Stage {
@@ -83,7 +83,7 @@ object salaDelBoss inherits Stage {
 				expOtorgada=500, 
 				monedasOtorgadas=100, 
 				position=game.at(8, 4),
-				imagen="enemigo.png"
+				imagen="finalboss.png"
 			)
 			game.addVisual(boss) // Usar addVisual en lugar de addVisualCharacter
 			visuals.add(boss)
@@ -301,12 +301,27 @@ keyboard.i().onPressDo({ => self.toggleStatus() })
 	method reanudarJuego() {
 		if (estadoJuego == "pausa") {
 			estadoJuego = "explorando"
-			// remover overlay si existe
 			if (overlayPausa != null) { game.removeVisual(overlayPausa); overlayPausa = null }
 			self.configurarTeclasExploracion()
 			game.title("Explorando - " + areaActual.background())
 		}
 	}
+
+	method mostrarGameOver(personaje) {
+        estadoJuego = "gameover"
+        game.clear()
+        const gameOverScreen = new GameOverScreen()
+        game.addVisual(gameOverScreen)
+        keyboard.enter().onPressDo({ =>
+            // Restaurar vida y maná al máximo
+            personaje.vida(personaje.vidaMaxima())
+            personaje.mana(personaje.manaMaximo())
+            
+            // Volver al pueblo
+            game.clear()
+            self.cambiarArea(puebloDelRey)
+        })
+    }
 }
 
 class Portal {
@@ -335,5 +350,10 @@ class Decoracion {
 
 	method image() = image
 	method position() = position
+}
+
+class GameOverScreen {
+    method position() = game.center()
+    method image() = "gameOver.png"
 }
 
