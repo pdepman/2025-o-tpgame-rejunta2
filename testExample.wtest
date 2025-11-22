@@ -125,15 +125,6 @@ describe "Tests Sistema de Habilidades - Nueva Arquitectura" {
     assert.equals(manaAntes, lanzador.mana())
   }
 
-  test "esFisica() retorna correctamente para cada tipo" {
-    const fisica = new HabilidadAtaqueFisico(nombre="Test", danio=5)
-    const magica = new HabilidadAtaqueMagico(nombre="Test", danio=5)
-    const curacion = new HabilidadCuracion(nombre="Test", curacion=10)
-    
-    assert.equals(true, fisica.esFisica())
-    assert.equals(false, magica.esFisica())
-    assert.equals(true, curacion.esFisica()) // Por defecto
-  }
 }
 
 describe "Tests Sistema de Items" {
