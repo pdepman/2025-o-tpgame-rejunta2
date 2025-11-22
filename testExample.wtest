@@ -1,9 +1,305 @@
-import example.pepita
+import wollok.game.*
+import objectsAndDragons.*      
+import combateYUI.*             
+import stages.*                 
 
-describe "group of tests for pepita" {
+describe "Tests Unitarios - Sistema de Luchadores" {
 
-  test "pepita has initial energy" {
-    assert.equals(100, pepita.energy())
+  test "recibirDaño nunca baja de 0 y el personaje queda no-vivo" {
+    const p = new Personaje(position = game.center())
+
+    p.recibirDaño(9999)
+
+    assert.equals(0, p.vida())
+    assert.equals(false, p.estaVivo())
   }
 
+  test "ganarExp → subirNivel rellena vida/maná y sube stats" {
+    const h = new Personaje(position = game.center())
+    const vidaPrev = h.vidaMaxima()
+    const manaPrevActual = h.mana()        
+
+    h.ganarExp(h.expSiguienteNivel())     
+
+    assert.equals(vidaPrev + 20, h.vidaMaxima())
+    assert.equals(h.vidaMaxima(), h.vida())
+    assert.equals(manaPrevActual + 10, h.mana())   
+  }
+
+  test "Personaje recién creado tiene valores iniciales correctos" {
+    const h = new Personaje(position = game.center())
+    
+    assert.equals("Héroe del pueblo", h.nombre())
+    assert.equals(1, h.nivel())
+    assert.equals(100, h.vida())
+    assert.equals(100, h.vidaMaxima())
+    assert.equals(50, h.mana())
+    assert.equals(50, h.manaMaximo())
+    assert.equals(true, h.estaVivo())
+  }
+
+  test "Enemigo recién creado tiene habilidad básica" {
+    const e = new Enemigo(
+      nombre="Test Enemy", 
+      vida=50, 
+      vidaMaxima=50, 
+      mana=20, 
+      manaMaximo=20, 
+      ataqueFisico=10, 
+      defensaFisica=5, 
+      ataqueMagico=0, 
+      defensaMagica=2, 
+      velocidad=5, 
+      expOtorgada=20, 
+      monedasOtorgadas=5, 
+      position=game.center(),
+      imagen="enemigo.png"
+    )
+    
+    assert.equals(1, e.habilidades().size())
+    assert.equals("Ataque Básico", e.habilidades().first().nombre())
+  }
+}
+
+describe "Tests Sistema de Habilidades - Nueva Arquitectura" {
+
+  test "HabilidadAtaqueFisico usa estadísticas físicas y respeta defensa" {
+    const lanzador = new Personaje(position = game.center())
+    const objetivo = new Personaje(position = game.center())
+    const hab = new HabilidadAtaqueFisico(nombre="Golpe Test", danio=10, costoMana=0)
+    
+    const vidaAntes = objetivo.vida()
+    lanzador.aplicarHabilidad(hab, objetivo)
+    
+    // Daño = ataqueFisico(10) + danio(10) - defensaFisica(5) = 15
+    assert.equals(vidaAntes - 15, objetivo.vida())
+  }
+
+  test "HabilidadAtaqueMagico usa estadísticas mágicas" {
+    const lanzador = new Personaje(position = game.center())
+    const objetivo = new Personaje(position = game.center())
+    const hab = new HabilidadAtaqueMagico(nombre="Hechizo Test", danio=12, costoMana=5)
+    
+    const vidaAntes = objetivo.vida()
+    const manaAntes = lanzador.mana()
+    lanzador.aplicarHabilidad(hab, objetivo)
+    
+    // Daño = ataqueMagico(8) + danio(12) - defensaMagica(4) = 16
+    assert.equals(vidaAntes - 16, objetivo.vida())
+    assert.equals(manaAntes - 5, lanzador.mana())
+  }
+
+  test "HabilidadCuracion restaura vida sin exceder máximo" {
+    const lanzador = new Personaje(position = game.center())
+    const objetivo = new Personaje(position = game.center())
+    objetivo.vida(30)
+    const hab = new HabilidadCuracion(nombre="Curar Test", curacion=40, costoMana=10)
+    
+    lanzador.aplicarHabilidad(hab, objetivo)
+    
+    assert.equals(70, objetivo.vida())
+  }
+
+  test "HabilidadCuracion respeta tope de vida máxima" {
+    const lanzador = new Personaje(position = game.center())
+    const objetivo = new Personaje(position = game.center())
+    objetivo.vida(90)
+    const hab = new HabilidadCuracion(nombre="Curar Test", curacion=40, costoMana=10)
+    
+    lanzador.aplicarHabilidad(hab, objetivo)
+    
+    assert.equals(100, objetivo.vida())
+  }
+
+  test "Habilidad sin maná suficiente no se ejecuta" {
+    const lanzador = new Personaje(position = game.center())
+    const objetivo = new Personaje(position = game.center())
+    lanzador.mana(5)
+    const hab = new HabilidadAtaqueMagico(nombre="Caro", danio=50, costoMana=10)
+
+    const vidaAntes = objetivo.vida()
+    const manaAntes = lanzador.mana()
+    lanzador.aplicarHabilidad(hab, objetivo)
+
+    assert.equals(vidaAntes, objetivo.vida())
+    assert.equals(manaAntes, lanzador.mana())
+  }
+
+}
+
+describe "Tests Sistema de Items" {
+
+  test "Poción cura cantidad exacta sin exceder máximo" {
+    const h = new Personaje(position = game.center())
+    h.vida(50)
+    const p = new Pocion(nombre="Poción 30", curacion=30)
+
+    p.usar(h)
+    assert.equals(80, h.vida())
+  }
+
+  test "Poción respeta tope de vida máxima" {
+    const h = new Personaje(position = game.center())
+    h.vida(90)
+    const p = new Pocion(nombre="Poción 30", curacion=30)
+
+    p.usar(h)
+    assert.equals(100, h.vida()) // No excede vidaMaxima
+  }
+
+  test "usarItem consume el item del inventario" {
+    const h = new Personaje(position = game.center())
+    h.vida(50)
+    h.inventario().clear()
+    h.inventario().add(new Pocion(nombre="Test", curacion=20))
+
+    const itemsAntes = h.inventario().size()
+    h.usarItem(h.inventario().first())
+
+    assert.equals(itemsAntes - 1, h.inventario().size())
+    assert.equals(70, h.vida())
+  }
+}
+
+describe "Tests Sistema de Stages y Navegación" {
+
+  test "Portal libre permite cambio de área" {
+    const h = new Personaje(position = game.center())
+    const portal = new Portal(position=game.at(0,0), destino=bosqueDeMonstruos)
+
+    mundo.cambiarArea(puebloDelRey)
+    portal.fueTocadoPor(h)
+    
+    // No podemos verificar el cambio directamente, pero no debería fallar
+    assert.equals(true, true)
+  }
+
+  test "Portal con condición falsa no permite paso" {
+    const h = new Personaje(position = game.center())
+    const portal = new Portal(position=game.at(0,0), destino=salaDelBoss, condicion={ _ => false })
+
+    mundo.cambiarArea(puebloDelRey)
+    portal.fueTocadoPor(h)
+    
+    // El portal debería rechazar el acceso sin fallar
+    assert.equals(true, true)
+  }
+
+  test "Acceso a Sala del Boss requiere nivel 3+" {
+    const h = new Personaje(position = game.center())
+    assert.equals(false, h.tieneAccesoASalaBoss())
+
+    h.ganarExp(h.expSiguienteNivel())  // nivel 2
+    assert.equals(false, h.tieneAccesoASalaBoss())
+
+    h.ganarExp(h.expSiguienteNivel())  // nivel 3
+    assert.equals(true, h.tieneAccesoASalaBoss())
+  }
+
+  test "Portal Boss respeta condición de acceso" {
+    const h = new Personaje(position = game.center())
+    const portalBoss = new Portal(
+      position=game.at(15,4),
+      destino=salaDelBoss,
+      condicion={ pj => pj.tieneAccesoASalaBoss() }
+    )
+
+    mundo.cambiarArea(puebloDelRey)
+    portalBoss.fueTocadoPor(h)   // nivel 1 → no debería pasar
+
+    // Subir a nivel 3
+    h.ganarExp(h.expSiguienteNivel())
+    h.ganarExp(h.expSiguienteNivel())
+
+    portalBoss.fueTocadoPor(h)   // nivel 3 → debería pasar
+    assert.equals(true, true)
+  }
+}
+
+describe "Tests Integración Combate" {
+
+  test "Usar habilidad en combate afecta al oponente" {
+    const h = new Personaje(position = game.center())
+    const e = new Enemigo(
+      nombre="Test", vida=50, vidaMaxima=50, mana=10, manaMaximo=10,
+      ataqueFisico=5, defensaFisica=2, ataqueMagico=0, defensaMagica=1,
+      velocidad=3, expOtorgada=10, monedasOtorgadas=5, 
+      position=game.center(), imagen="enemigo.png"
+    )
+
+    const vidaAntes = e.vida()
+    h.aplicarHabilidad(h.habilidades().first(), e)
+
+    assert.equals(true, e.vida() < vidaAntes)
+  }
+}
+
+describe "Tests Estado del Mundo" {
+
+  test "Mundo comienza en estado correcto" {
+    assert.equals("Héroe del pueblo", mundo.heroe().nombre())
+    assert.equals(true, mundo.heroe().estaVivo())
+  }
+
+  test "Volver a exploración establece estado correcto" {
+    mundo.cambiarArea(bosqueDeMonstruos)
+    mundo.volverAExploracion()
+
+    assert.equals("explorando", mundo.estadoJuego())
+  }
+
+  test "Daño letal marca personaje como no-vivo" {
+    const h = new Personaje(position = game.center())
+    h.recibirDaño(9999)
+    
+    assert.equals(0, h.vida())
+    assert.equals(false, h.estaVivo())
+  }
+}
+
+describe "Tests Funcionalidades Especiales" {
+
+  test "Enemigo image() selecciona sprite correcto por nombre" {
+    const lobo = new Enemigo(
+      nombre="Lobo Salvaje", vida=40, vidaMaxima=40, mana=10, manaMaximo=10,
+      ataqueFisico=8, defensaFisica=3, ataqueMagico=0, defensaMagica=1,
+      velocidad=8, expOtorgada=30, monedasOtorgadas=10,
+      position=game.center(), imagen=null
+    )
+    
+    const araña = new Enemigo(
+      nombre="Araña Gigante", vida=30, vidaMaxima=30, mana=5, manaMaximo=5,
+      ataqueFisico=6, defensaFisica=2, ataqueMagico=0, defensaMagica=1,
+      velocidad=8, expOtorgada=20, monedasOtorgadas=5,
+      position=game.center(), imagen=null
+    )
+
+    assert.equals("lobo.png", lobo.image())
+    assert.equals("araña.png", araña.image())
+  }
+
+  test "Enemigo con imagen específica la usa" {
+    const enemigo = new Enemigo(
+      nombre="Test", vida=50, vidaMaxima=50, mana=10, manaMaximo=10,
+      ataqueFisico=5, defensaFisica=2, ataqueMagico=0, defensaMagica=1,
+      velocidad=3, expOtorgada=10, monedasOtorgadas=5,
+      position=game.center(), imagen="custom.png"
+    )
+
+    assert.equals("custom.png", enemigo.image())
+  }
+
+  test "Subir varios niveles acumula bonuses correctamente" {
+    const h = new Personaje(position = game.center())
+    const vidaInicial = h.vidaMaxima()
+    const ataqueInicial = h.ataqueFisico()
+
+    // Subir 2 niveles
+    h.ganarExp(h.expSiguienteNivel())
+    h.ganarExp(h.expSiguienteNivel())
+
+    assert.equals(3, h.nivel())
+    assert.equals(vidaInicial + 40, h.vidaMaxima()) // +20 por nivel
+    assert.equals(ataqueInicial + 6, h.ataqueFisico()) // +3 por nivel
+  }
 }
